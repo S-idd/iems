@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  # IEMS Application (Development)
+  iems-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: iems-app-dev
+    ports:
+      - "8080:8080"
+      - "5005:5005"  # Debug port
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB:-iemsdb}
+      DB_USERNAME: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-root}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-redispass}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER:-admin}
+      RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS:-admin123}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      ZIPKIN_BASE_URL: http://zipkin:9411
+      JAVA_OPTS: >
+        -Xmx512m
+        -Xms256m
+        -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
+        -Dspring.jpa.show-sql=true
+        -Dlogging.level.com.iems=DEBUG
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+      - kafka
+      - zipkin
+    networks:
+      - iems-network
+    volumes:
+      - ./logs:/app/logs
+      - ./target:/app/target
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # Flink Job (Development)
+  flink-accessibility-job:
+    build:
+      context: ./flink-jobs
+      dockerfile: Dockerfile
+    container_name: iems-flink-job-dev
+    depends_on:
+      - flink-jobmanager
+      - kafka
+      - postgres
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB:-iemsdb}
+      DB_USERNAME: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-root}
+      FLINK_JOBMANAGER_HOST: flink-jobmanager
+      FLINK_JOBMANAGER_PORT: 6123
+    networks:
+      - iems-network
+    volumes:
+      - ./flink-jobs/target:/app/target
+      - ./logs:/app/logs
+
+networks:
+  iems-network:
+    external: true
