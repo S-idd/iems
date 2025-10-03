@@ -1,6 +1,63 @@
+
+# ========== infra/prometheus/prometheus.yml ==========
 global:
   scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'iems-dev'
+    environment: 'development'
+
+# Alerting configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+# Rule files
+rule_files: []
+
+# Scrape configurations
 scrape_configs:
-  - job_name: 'iems'
+  # IEMS Application metrics
+  - job_name: 'iems-application'
+    metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['localhost:8080']
+      - targets: ['iems-app:8080']
+        labels:
+          application: 'iems'
+          service: 'api'
+
+  # Kafka JMX metrics
+  - job_name: 'kafka'
+    static_configs:
+      - targets: ['kafka:9997']
+        labels:
+          application: 'kafka'
+          service: 'messaging'
+
+  # Flink JobManager metrics
+  - job_name: 'flink-jobmanager'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['flink-jobmanager:8081']
+        labels:
+          application: 'flink'
+          service: 'stream-processing'
+          component: 'jobmanager'
+
+  # Flink TaskManager metrics
+  - job_name: 'flink-taskmanager'
+    static_configs:
+      - targets: ['flink-taskmanager:8081']
+        labels:
+          application: 'flink'
+          service: 'stream-processing'
+          component: 'taskmanager'
+
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          application: 'prometheus'
+          service: 'monitoring'

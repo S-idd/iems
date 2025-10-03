@@ -36,24 +36,77 @@ public class EmailTask implements Serializable {
     }
 
     // Getters and Setters
-    public String getTo() { return to; }
-    public void setTo(String to) { this.to = to; }
-    public String getCc() { return cc; }
-    public void setCc(String cc) { this.cc = cc; }
-    public String getBcc() { return bcc; }
-    public void setBcc(String bcc) { this.bcc = bcc; }
-    public String getSubject() { return subject; }
-    public void setSubject(String subject) { this.subject = subject; }
-    public String getBody() { return body; }
-    public void setBody(String body) { this.body = body; }
-    public boolean isHtml() { return html; }
-    public void setHtml(boolean html) { this.html = html; }
-    public Map<String, String> getAttachments() { return attachments; }
-    public void setAttachments(Map<String, String> attachments) { this.attachments = attachments; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
-    public Integer getPriority() { return priority; }
-    public void setPriority(Integer priority) { this.priority = priority; }
+    public String getTo() {
+        return to;
+    }
+
+    public void setTo(String to) {
+        this.to = to;
+    }
+
+    public String getCc() {
+        return cc;
+    }
+
+    public void setCc(String cc) {
+        this.cc = cc;
+    }
+
+    public String getBcc() {
+        return bcc;
+    }
+
+    public void setBcc(String bcc) {
+        this.bcc = bcc;
+    }
+
+    public String getSubject() {
+        return subject;
+    }
+
+    public void setSubject(String subject) {
+        this.subject = subject;
+    }
+
+    public String getBody() {
+        return body;
+    }
+
+    public void setBody(String body) {
+        this.body = body;
+    }
+
+    public boolean isHtml() {
+        return html;
+    }
+
+    public void setHtml(boolean html) {
+        this.html = html;
+    }
+
+    public Map<String, String> getAttachments() {
+        return attachments;
+    }
+
+    public void setAttachments(Map<String, String> attachments) {
+        this.attachments = attachments;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public Integer getPriority() {
+        return priority;
+    }
+
+    public void setPriority(Integer priority) {
+        this.priority = priority;
+    }
 
     @Override
     public String toString() {
@@ -66,4 +119,3 @@ public class EmailTask implements Serializable {
                 '}';
     }
 }
-

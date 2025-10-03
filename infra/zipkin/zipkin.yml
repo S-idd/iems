@@ -1,2 +1,13 @@
-zipkin:
-  storage: memory
+# This file is optional - Zipkin runs with default config
+# If you need custom configuration, place it here
+# Otherwise, the docker-compose configuration is sufficient
+
+server:
+  port: 9411
+
+spring:
+  application:
+    name: zipkin-server
+
+storage:
+  type: mem

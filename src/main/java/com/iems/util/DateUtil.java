@@ -1,4 +1,3 @@
-// ========== DateUtil.java ==========
 package com.iems.util;
 
 import java.time.DayOfWeek;
@@ -19,28 +18,28 @@ public class DateUtil {
      * Get the start of the week (Monday) for a given date.
      */
     public static LocalDate getWeekStart(LocalDate date) {
-        return date != null ? date.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)) : null;
+        return date.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
     }
 
     /**
      * Get the end of the week (Sunday) for a given date.
      */
     public static LocalDate getWeekEnd(LocalDate date) {
-        return date != null ? date.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY)) : null;
+        return date.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY));
     }
 
     /**
      * Get the start of the month for a given date.
      */
     public static LocalDate getMonthStart(LocalDate date) {
-        return date != null ? date.with(TemporalAdjusters.firstDayOfMonth()) : null;
+        return date.with(TemporalAdjusters.firstDayOfMonth());
     }
 
     /**
      * Get the end of the month for a given date.
      */
     public static LocalDate getMonthEnd(LocalDate date) {
-        return date != null ? date.with(TemporalAdjusters.lastDayOfMonth()) : null;
+        return date.with(TemporalAdjusters.lastDayOfMonth());
     }
 
     /**
@@ -65,39 +64,60 @@ public class DateUtil {
     }
 
     /**
-     * Parse string to LocalDateTime.
-     */
-    public static LocalDateTime parseDateTime(String dateTimeString) {
-        return dateTimeString != null ? LocalDateTime.parse(dateTimeString, DATETIME_FORMATTER) : null;
-    }
-
-    /**
      * Calculate days between two dates.
      */
     public static long daysBetween(LocalDate start, LocalDate end) {
-        if (start == null || end == null) return 0L;
         return java.time.temporal.ChronoUnit.DAYS.between(start, end);
     }
 
     /**
-     * Check if date is within range (inclusive).
+     * Check if date is within range.
      */
     public static boolean isWithinRange(LocalDate date, LocalDate start, LocalDate end) {
-        if (date == null || start == null || end == null) return false;
         return !date.isBefore(start) && !date.isAfter(end);
     }
 
     /**
-     * Get start of day for a given date (00:00:00).
+     * Get date N days ago from now.
      */
-    public static LocalDateTime startOfDay(LocalDate date) {
-        return date != null ? date.atStartOfDay() : null;
+    public static LocalDate daysAgo(int days) {
+        return LocalDate.now().minusDays(days);
     }
 
     /**
-     * Get end of day for a given date (23:59:59).
+     * Get date N days from now.
      */
-    public static LocalDateTime endOfDay(LocalDate date) {
-        return date != null ? date.atTime(23, 59, 59) : null;
+    public static LocalDate daysFromNow(int days) {
+        return LocalDate.now().plusDays(days);
+    }
+
+    /**
+     * Check if date is in the past.
+     */
+    public static boolean isPast(LocalDate date) {
+        return date.isBefore(LocalDate.now());
+    }
+
+    /**
+     * Check if date is in the future.
+     */
+    public static boolean isFuture(LocalDate date) {
+        return date.isAfter(LocalDate.now());
+    }
+
+    /**
+     * Get current academic year (e.g., "2024-2025").
+     */
+    public static String getCurrentAcademicYear() {
+        LocalDate now = LocalDate.now();
+        int year = now.getYear();
+        int month = now.getMonthValue();
+        
+        // Academic year typically starts in August/September
+        if (month >= 8) {
+            return year + "-" + (year + 1);
+        } else {
+            return (year - 1) + "-" + year;
+        }
     }
 }

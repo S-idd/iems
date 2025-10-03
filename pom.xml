@@ -212,6 +212,14 @@
             <artifactId>h2</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <!-- I am Adding This Dependency Mannually And That Is Sl4j-->
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-api</artifactId>
+            <version>2.23.1</version>
+        </dependency>
+        
     </dependencies>
     
     <dependencyManagement>
@@ -296,7 +304,7 @@
             </plugin>
 
             <!-- Add external source directory (flink-jobs) to main project so IDE/maven
-                 includes Flink job classes on the classpath without multi-module refactor -->
+            includes Flink job classes on the classpath without multi-module refactor -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>build-helper-maven-plugin</artifactId>
