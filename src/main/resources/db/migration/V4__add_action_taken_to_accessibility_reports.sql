@@ -1,5 +1,4 @@
--- Flyway migration V4: add action_taken column to accessibility_reports
--- This checks for existence and adds the column if missing (PostgreSQL-specific DO block)
+-- Add action_taken column to accessibility_reports
 DO $$
 BEGIN
     IF NOT EXISTS (

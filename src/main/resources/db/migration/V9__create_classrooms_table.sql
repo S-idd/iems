@@ -1,4 +1,4 @@
--- Flyway migration V9: ensure classrooms table has required columns
+-- Ensure classrooms table has required columns
 DO $$
 BEGIN
     -- If the table doesn't exist, create it with the expected schema

@@ -1,4 +1,4 @@
--- Flyway migration V6: add created_at and updated_at columns to accessibility_reports
+-- Add created_at and updated_at columns to accessibility_reports
 DO $$
 BEGIN
     IF NOT EXISTS (

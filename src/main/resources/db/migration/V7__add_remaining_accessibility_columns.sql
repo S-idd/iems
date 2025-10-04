@@ -1,4 +1,4 @@
--- Flyway migration V7: add remaining columns expected by AccessibilityReport entity
+-- Add remaining columns expected by AccessibilityReport entity
 DO $$
 BEGIN
     -- description

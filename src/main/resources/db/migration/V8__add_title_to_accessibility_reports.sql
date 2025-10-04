@@ -1,4 +1,4 @@
--- Flyway migration V8: add title column to accessibility_reports
+-- Add title column to accessibility_reports
 DO $$
 BEGIN
     IF NOT EXISTS (

@@ -1,4 +1,4 @@
--- Flyway migration V5: add assigned_to (and ensure reported_by) columns to accessibility_reports
+-- Add assigned_to and reported_by columns to accessibility_reports
 DO $$
 BEGIN
     IF NOT EXISTS (

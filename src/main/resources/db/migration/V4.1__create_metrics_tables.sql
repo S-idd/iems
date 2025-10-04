@@ -1,10 +1,9 @@
--- V4__create_metrics_tables.sql
 -- Create tables for Flink aggregated metrics and analytics
 
 -- Accessibility metrics weekly aggregation
 CREATE TABLE IF NOT EXISTS accessibility_metrics_weekly (
     id BIGSERIAL PRIMARY KEY,
-    school_id BIGINT NOT NULL REFERENCES schools(id) ON DELETE CASCADE,
+    school_id BIGINT NOT NULL REFERENCES school(id) ON DELETE CASCADE,
     week_start_date DATE NOT NULL,
     report_count BIGINT NOT NULL DEFAULT 0,
     resolved_count BIGINT DEFAULT 0,
@@ -38,8 +37,8 @@ CREATE INDEX idx_scholarship_metrics_date ON scholarship_metrics(metric_date);
 -- Enrollment metrics
 CREATE TABLE IF NOT EXISTS enrollment_metrics (
     id BIGSERIAL PRIMARY KEY,
-    school_id BIGINT REFERENCES schools(id) ON DELETE CASCADE,
-    course_id BIGINT REFERENCES courses(id) ON DELETE CASCADE,
+    school_id BIGINT REFERENCES school(id) ON DELETE CASCADE,
+    course_id BIGINT, -- Will reference courses(id) after V11
     semester VARCHAR(100),
     academic_year VARCHAR(20),
     total_enrolled BIGINT DEFAULT 0,
@@ -58,7 +57,7 @@ CREATE INDEX idx_enrollment_metrics_semester ON enrollment_metrics(semester, aca
 -- Student demographics and diversity metrics
 CREATE TABLE IF NOT EXISTS student_diversity_metrics (
     id BIGSERIAL PRIMARY KEY,
-    school_id BIGINT NOT NULL REFERENCES schools(id) ON DELETE CASCADE,
+    school_id BIGINT NOT NULL REFERENCES school(id) ON DELETE CASCADE,
     metric_date DATE NOT NULL,
     total_students BIGINT DEFAULT 0,
     students_with_disabilities BIGINT DEFAULT 0,
@@ -98,7 +97,7 @@ CREATE INDEX idx_audit_log_created ON audit_log(created_at);
 -- Real-time dashboard metrics cache
 CREATE TABLE IF NOT EXISTS dashboard_metrics_cache (
     id BIGSERIAL PRIMARY KEY,
-    school_id BIGINT REFERENCES schools(id) ON DELETE CASCADE,
+    school_id BIGINT REFERENCES school(id) ON DELETE CASCADE,
     metric_key VARCHAR(100) NOT NULL,
     metric_value TEXT NOT NULL,
     metric_type VARCHAR(50),

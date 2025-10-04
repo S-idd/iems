@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.iems.exception.ResourceNotFoundException;
 import com.iems.model.dto.SchoolDto;
+import com.iems.model.dto.SchoolResponseDTO;
 import com.iems.model.entity.School;
 import com.iems.repository.SchoolRepository;
 
@@ -137,5 +138,25 @@ public class SchoolService {
         school.setEstablishedYear(dto.getEstablishedYear());
         school.setStudentCapacity(dto.getStudentCapacity());
         return school;
+    }
+
+    public List<SchoolResponseDTO> getSchoolsByCity(String city) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    public List<SchoolResponseDTO> getSchoolsByState(String state) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    public List<SchoolResponseDTO> getSchoolsByDistrict(String district) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    public List<SchoolResponseDTO> searchSchools(String keyword) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    public SchoolResponseDTO getSchoolByCode(String code) {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 }

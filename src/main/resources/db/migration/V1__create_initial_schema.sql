@@ -1,5 +1,5 @@
--- V1: create users table
+-- Create users table
 CREATE TABLE IF NOT EXISTS users (
-  id BIGSERIAL PRIMARY KEY,
-  username VARCHAR(100) NOT NULL
+    id BIGSERIAL PRIMARY KEY,
+    username VARCHAR(100) NOT NULL
 );

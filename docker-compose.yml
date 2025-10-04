@@ -26,7 +26,7 @@ services:
   redis:
     image: redis:7-alpine
     container_name: iems-redis
-    command: redis-server --requirepass ${REDIS_PASSWORD:-redispass}
+    command: redis-server --requirepass ${REDIS_PASSWORD:-root}
     ports:
       - "6379:6379"
     volumes:
@@ -90,7 +90,7 @@ services:
     container_name: iems-rabbitmq
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER:-admin}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS:-admin123}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS:-root}
     ports:
       - "5672:5672"
       - "15672:15672"

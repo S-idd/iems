@@ -1,5 +1,5 @@
-package com.iems.service;
+// package com.iems.service;
 
-public class ScholarshipServiceTest {
-    // ...existing code...
-}
+// public class ScholarshipServiceTest {
+//     // ...existing code...
+// }

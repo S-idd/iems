@@ -1,8 +1,9 @@
 package com.iems.flink;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import java.io.Serializable;
 import java.util.Objects;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * Represents an accessibility event record from the Kafka topic.
