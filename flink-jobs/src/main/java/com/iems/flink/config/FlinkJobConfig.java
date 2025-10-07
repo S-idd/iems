@@ -27,20 +27,61 @@ public class FlinkJobConfig implements Serializable {
         this.dbPassword = System.getenv().getOrDefault("DB_PASSWORD", "iemspass");
     }
 
-    public String getKafkaBootstrapServers() { return kafkaBootstrapServers; }
-    public void setKafkaBootstrapServers(String kafkaBootstrapServers) { this.kafkaBootstrapServers = kafkaBootstrapServers; }
-    public String getKafkaGroupId() { return kafkaGroupId; }
-    public void setKafkaGroupId(String kafkaGroupId) { this.kafkaGroupId = kafkaGroupId; }
-    public String getDbHost() { return dbHost; }
-    public void setDbHost(String dbHost) { this.dbHost = dbHost; }
-    public String getDbPort() { return dbPort; }
-    public void setDbPort(String dbPort) { this.dbPort = dbPort; }
-    public String getDbName() { return dbName; }
-    public void setDbName(String dbName) { this.dbName = dbName; }
-    public String getDbUsername() { return dbUsername; }
-    public void setDbUsername(String dbUsername) { this.dbUsername = dbUsername; }
-    public String getDbPassword() { return dbPassword; }
-    public void setDbPassword(String dbPassword) { this.dbPassword = dbPassword; }
+    public String getKafkaBootstrapServers() {
+        return kafkaBootstrapServers;
+    }
+
+    public void setKafkaBootstrapServers(String kafkaBootstrapServers) {
+        this.kafkaBootstrapServers = kafkaBootstrapServers;
+    }
+
+    public String getKafkaGroupId() {
+        return kafkaGroupId;
+    }
+
+    public void setKafkaGroupId(String kafkaGroupId) {
+        this.kafkaGroupId = kafkaGroupId;
+    }
+
+    public String getDbHost() {
+        return dbHost;
+    }
+
+    public void setDbHost(String dbHost) {
+        this.dbHost = dbHost;
+    }
+
+    public String getDbPort() {
+        return dbPort;
+    }
+
+    public void setDbPort(String dbPort) {
+        this.dbPort = dbPort;
+    }
+
+    public String getDbName() {
+        return dbName;
+    }
+
+    public void setDbName(String dbName) {
+        this.dbName = dbName;
+    }
+
+    public String getDbUsername() {
+        return dbUsername;
+    }
+
+    public void setDbUsername(String dbUsername) {
+        this.dbUsername = dbUsername;
+    }
+
+    public String getDbPassword() {
+        return dbPassword;
+    }
+
+    public void setDbPassword(String dbPassword) {
+        this.dbPassword = dbPassword;
+    }
 
     public String getJdbcUrl() {
         return String.format("jdbc:postgresql://%s:%s/%s", dbHost, dbPort, dbName);

@@ -8,6 +8,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public class AccessibilityEventRecord {
 
+    private static final long serialVersionUID = 1L;
+
     @JsonProperty("eventId")
     private String eventId;
 

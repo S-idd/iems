@@ -20,7 +20,6 @@ import org.apache.flink.connector.jdbc.JdbcSink;
 import org.apache.flink.connector.kafka.source.KafkaSource;
 import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
 import org.apache.flink.core.fs.Path;
-import org.apache.flink.formats.json.JsonDeserializationSchema;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.sink.filesystem.StreamingFileSink;
@@ -42,7 +41,7 @@ import com.iems.flink.model.WeeklyAccessibilityMetrics;
  * Configurable via application-dev.properties.
  */
 public class AccessibilityMetricsJob implements Serializable {
-
+    private static final long serialVersionUID = 1L;
     private static final Logger LOG = LoggerFactory.getLogger(AccessibilityMetricsJob.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
@@ -76,19 +75,24 @@ public class AccessibilityMetricsJob implements Serializable {
         env.setParallelism(1); // For local testing
 
         DataStream<AccessibilityEventRecord> source;
+
         try {
             if ("kafka".equals(mode)) {
+                // Use custom deserialization for Flink 1.18.1
                 KafkaSource<AccessibilityEventRecord> kafkaSource = KafkaSource.<AccessibilityEventRecord>builder()
                         .setBootstrapServers(bootstrapServers)
                         .setTopics(topic)
                         .setGroupId(config.getProperty("kafka.group.id", "flink-accessibility-group"))
                         .setStartingOffsets(OffsetsInitializer.committedOffsets(OffsetResetStrategy.EARLIEST))
-                        .setValueOnlyDeserializer(new JsonDeserializationSchema<>(AccessibilityEventRecord.class))
+                        .setValueOnlyDeserializer(new AccessibilityEventDeserializer())
                         .build();
+
                 source = env.fromSource(kafkaSource, WatermarkStrategy.noWatermarks(), "Kafka Source");
             } else {
                 source = env.readTextFile(input)
                         .map(new MapFunction<String, AccessibilityEventRecord>() {
+                            private static final long serialVersionUID = 1L;
+
                             @Override
                             public AccessibilityEventRecord map(String json) throws Exception {
                                 try {
@@ -109,6 +113,8 @@ public class AccessibilityMetricsJob implements Serializable {
         WatermarkStrategy<AccessibilityEventRecord> wmStrategy = WatermarkStrategy
                 .<AccessibilityEventRecord>forBoundedOutOfOrderness(java.time.Duration.ofMinutes(10))
                 .withTimestampAssigner(new SerializableTimestampAssigner<AccessibilityEventRecord>() {
+                    private static final long serialVersionUID = 1L;
+
                     @Override
                     public long extractTimestamp(AccessibilityEventRecord record, long recordTimestamp) {
                         return record.getTimestamp();
@@ -129,6 +135,7 @@ public class AccessibilityMetricsJob implements Serializable {
                     .withUsername(config.getProperty("postgres.username", "postgres"))
                     .withPassword(config.getProperty("postgres.password", "postgres"))
                     .build();
+
             String table = config.getProperty("postgres.table", "weekly_metrics");
             metrics.addSink(JdbcSink.sink(
                     "INSERT INTO " + table + " (school_id, week_start, week_end, total_reports, avg_severity, reports_by_disability) " +
@@ -153,12 +160,18 @@ public class AccessibilityMetricsJob implements Serializable {
             StreamingFileSink<String> fileSink = StreamingFileSink
                     .forRowFormat(new Path(output), new SimpleStringEncoder<String>("UTF-8"))
                     .build();
-            metrics.map(metric -> {
-                try {
-                    return MAPPER.writeValueAsString(metric);
-                } catch (Exception e) {
-                    LOG.error("Failed to serialize metric", e);
-                    return "{}";
+            
+            metrics.map(new MapFunction<WeeklyAccessibilityMetrics, String>() {
+                private static final long serialVersionUID = 1L;
+
+                @Override
+                public String map(WeeklyAccessibilityMetrics metric) throws Exception {
+                    try {
+                        return MAPPER.writeValueAsString(metric);
+                    } catch (Exception e) {
+                        LOG.error("Failed to serialize metric", e);
+                        return "{}";
+                    }
                 }
             }).addSink(fileSink);
         }
@@ -168,6 +181,8 @@ public class AccessibilityMetricsJob implements Serializable {
 
     // Aggregator for counts and sums
     public static class MetricsAggregator implements AggregateFunction<AccessibilityEventRecord, Acc, Acc> {
+        private static final long serialVersionUID = 1L;
+
         @Override
         public Acc createAccumulator() {
             return new Acc();
@@ -197,11 +212,14 @@ public class AccessibilityMetricsJob implements Serializable {
 
     // Process function to build output with window info
     public static class MetricsProcessWindowFunction extends ProcessWindowFunction<Acc, WeeklyAccessibilityMetrics, Long, TimeWindow> {
+        private static final long serialVersionUID = 1L;
+
         @Override
         public void process(Long schoolId, Context context, Iterable<Acc> elements, Collector<WeeklyAccessibilityMetrics> out) {
             Acc acc = elements.iterator().next();
             long start = context.window().getStart();
             long end = context.window().getEnd() - 1;
+
             LocalDate weekStart = Instant.ofEpochMilli(start).atZone(ZoneId.of("UTC")).toLocalDate();
             LocalDate weekEnd = Instant.ofEpochMilli(end).atZone(ZoneId.of("UTC")).toLocalDate();
 
@@ -212,12 +230,14 @@ public class AccessibilityMetricsJob implements Serializable {
             metrics.setTotalReports(acc.count);
             metrics.setAvgSeverity(acc.count > 0 ? acc.sumSeverity / acc.count : 0.0);
             metrics.setReportsByDisability(acc.disabilityCounts);
+
             out.collect(metrics);
         }
     }
 
     // Accumulator class
     public static class Acc implements Serializable {
+        private static final long serialVersionUID = 1L;
         long count = 0;
         double sumSeverity = 0.0;
         Map<String, Long> disabilityCounts = new HashMap<>();
