@@ -25,6 +25,8 @@ import org.springframework.kafka.support.serializer.ErrorHandlingDeserializer;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 
+import com.iems.kafka.model.AccessibilityEvent;
+
 /**
  * Kafka configuration for event-driven communication.
  * Defines topics, producers, and consumers for the IEMS event streaming architecture.
@@ -148,6 +150,13 @@ public class KafkaConfig {
     public KafkaTemplate<String, Object> kafkaTemplate() {
         return new KafkaTemplate<>(producerFactory());
     }
+
+    @Bean
+    public KafkaTemplate<String, AccessibilityEvent> accessibilityKafkaTemplate() {
+        return new KafkaTemplate<>(new DefaultKafkaProducerFactory<>(producerFactory().getConfigurationProperties()));
+
+    }
+
 
     /**
      * Consumer configuration for receiving events from Kafka.

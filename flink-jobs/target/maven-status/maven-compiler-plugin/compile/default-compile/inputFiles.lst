@@ -1,5 +1,7 @@
+D:\iems\flink-jobs\src\main\java\com\iems\flink\AccessibilityEventDeserializer.java
 D:\iems\flink-jobs\src\main\java\com\iems\flink\model\AccessibilityEventRecord.java
 D:\iems\flink-jobs\src\main\java\com\iems\flink\AccessibilityEventRecord.java
 D:\iems\flink-jobs\src\main\java\com\iems\flink\config\FlinkJobConfig.java
 D:\iems\flink-jobs\src\main\java\com\iems\flink\AccessibilityMetricsJob.java
+D:\iems\flink-jobs\src\main\java\com\iems\flink\config\FlinkJobRunner.java
 D:\iems\flink-jobs\src\main\java\com\iems\flink\model\WeeklyAccessibilityMetrics.java

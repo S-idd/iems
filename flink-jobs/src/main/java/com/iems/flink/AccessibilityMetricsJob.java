@@ -130,10 +130,10 @@ public class AccessibilityMetricsJob implements Serializable {
         // Sink based on configuration
         if ("jdbc".equals(sinkType)) {
             JdbcConnectionOptions connOptions = new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
-                    .withUrl(config.getProperty("postgres.url", "jdbc:postgresql://localhost:5432/iems"))
+                    .withUrl(config.getProperty("postgres.url", "jdbc:postgresql://iems-postgres:5432/iems"))
                     .withDriverName("org.postgresql.Driver")
                     .withUsername(config.getProperty("postgres.username", "postgres"))
-                    .withPassword(config.getProperty("postgres.password", "postgres"))
+                    .withPassword(config.getProperty("postgres.password", "root"))
                     .build();
 
             String table = config.getProperty("postgres.table", "weekly_metrics");

@@ -1,0 +1,13 @@
+com\iems\flink\model\WeeklyAccessibilityMetrics.class
+com\iems\flink\AccessibilityMetricsJob$2.class
+com\iems\flink\AccessibilityMetricsJob$Acc.class
+com\iems\flink\AccessibilityMetricsJob$1.class
+com\iems\flink\AccessibilityMetricsJob$3.class
+com\iems\flink\AccessibilityEventRecord.class
+com\iems\flink\config\FlinkJobRunner.class
+com\iems\flink\AccessibilityMetricsJob$MetricsAggregator.class
+com\iems\flink\AccessibilityMetricsJob$MetricsProcessWindowFunction.class
+com\iems\flink\AccessibilityMetricsJob.class
+com\iems\flink\AccessibilityEventDeserializer.class
+com\iems\flink\config\FlinkJobConfig.class
+com\iems\flink\model\AccessibilityEventRecord.class

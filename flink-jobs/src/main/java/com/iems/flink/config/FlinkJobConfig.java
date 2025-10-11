@@ -20,11 +20,11 @@ public class FlinkJobConfig implements Serializable {
         // Load from environment variables
         this.kafkaBootstrapServers = System.getenv().getOrDefault("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092");
         this.kafkaGroupId = System.getenv().getOrDefault("KAFKA_GROUP_ID", "flink-accessibility-metrics");
-        this.dbHost = System.getenv().getOrDefault("DB_HOST", "localhost");
+        this.dbHost = System.getenv().getOrDefault("DB_HOST", "postgres");
         this.dbPort = System.getenv().getOrDefault("DB_PORT", "5432");
         this.dbName = System.getenv().getOrDefault("DB_NAME", "iemsdb");
-        this.dbUsername = System.getenv().getOrDefault("DB_USERNAME", "iemsuser");
-        this.dbPassword = System.getenv().getOrDefault("DB_PASSWORD", "iemspass");
+        this.dbUsername = System.getenv().getOrDefault("DB_USERNAME", "postgres");
+        this.dbPassword = System.getenv().getOrDefault("DB_PASSWORD", "root");
     }
 
     public String getKafkaBootstrapServers() {

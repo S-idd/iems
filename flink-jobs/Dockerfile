@@ -1,8 +1,8 @@
 # Dockerfile for Flink Job
 FROM flink:1.18-scala_2.12-java11
 
-# Copy the JAR file
-COPY target/iems-flink-jobs-1.0.0-SNAPSHOT.jar /opt/flink/usrlib/
+# Copy the JAR file (FIXED: Changed from iems-flink-jobs to flink-jobs)
+COPY target/flink-jobs-1.0.0-SNAPSHOT.jar /opt/flink/usrlib/
 
 # Set working directory
 WORKDIR /opt/flink
@@ -14,5 +14,5 @@ RUN mkdir -p /opt/flink/log
 ENV FLINK_JOB_MAIN_CLASS=com.iems.flink.AccessibilityMetricsJob
 ENV FLINK_JOB_PARALLELISM=2
 
-# Entry point to submit the Flink job
-ENTRYPOINT ["/bin/bash", "-c", "/opt/flink/bin/flink run -d /opt/flink/usrlib/iems-flink-jobs-1.0.0-SNAPSHOT.jar"]
+# Entry point to submit the Flink job (FIXED: Changed JAR name here too)
+ENTRYPOINT ["/bin/bash", "-c", "/opt/flink/bin/flink run -d /opt/flink/usrlib/flink-jobs-1.0.0-SNAPSHOT.jar"]
