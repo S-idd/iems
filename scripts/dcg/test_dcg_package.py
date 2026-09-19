@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import io
 import json
 import os
 from pathlib import Path
@@ -11,13 +12,13 @@ import sys
 import tempfile
 import unittest
 from unittest.mock import patch
+import zipfile
 
 import dcg_package as package
 import phase2_service_demo as service
 
 
 LIVE_PACKAGE = os.environ.get("IEMS_DCG_PACKAGE_TEST_ROOT")
-HISTORICAL_PHASE1 = package.IEMS_ROOT / ".dcg/runtime/dcg-4.0.0-phase1-no-ai-dev.20260917-macos-arm64"
 
 
 @unittest.skipUnless(LIVE_PACKAGE, "Set IEMS_DCG_PACKAGE_TEST_ROOT to a verified package")
@@ -187,14 +188,27 @@ class PackageSelectionValidationTest(unittest.TestCase):
             package.validate_package(root, required_capabilities=package.PHASE1_CAPABILITIES)
 
     def test_13_missing_phase2_capability_is_rejected(self):
-        with self.assertRaisesRegex(package.PackageValidationError, "advisory-persistence"):
-            package.validate_package(HISTORICAL_PHASE1, required_capabilities=package.PHASE2_CAPABILITIES)
+        root = self.clone(); build = json.loads((root / "build-info.json").read_text())
+        service_name = next(name for name in build["artifacts"] if "contract-service" in name)
+        source = root / service_name
+        output = io.BytesIO()
+        removed = "BOOT-INF/classes/com/ideas/contracts/service/model/CheckRunAdvisoryResponse.class"
+        with zipfile.ZipFile(source) as reader, zipfile.ZipFile(output, "w") as writer:
+            for info in reader.infolist():
+                if info.filename != removed:
+                    writer.writestr(info, reader.read(info.filename))
+        digest = self.replace(root, service_name, output.getvalue())
+        build["artifacts"][service_name] = digest
+        build["development"]["java_build"]["service_sha256"] = digest
+        self.save_build(root, build)
+        with self.assertRaisesRegex(package.PackageValidationError, "advisory-rest"):
+            package.validate_package(root, required_capabilities=package.PHASE2_CAPABILITIES)
 
-    def test_14_historical_package_is_accepted_for_real_capabilities(self):
-        result = package.validate_package(HISTORICAL_PHASE1,
+    def test_14_selected_package_is_accepted_for_phase1_capabilities(self):
+        result = package.validate_package(self.canonical,
                                           required_capabilities=package.PHASE1_CAPABILITIES)
         self.assertIn("deterministic-no-ai", result["capabilities"])
-        self.assertTrue(result["source"]["dirty"])
+        self.assertTrue(package.PHASE1_CAPABILITIES <= set(result["capabilities"]))
 
     def test_15_future_version_is_accepted_without_source_change(self):
         root = self.clone(); build = json.loads((root / "build-info.json").read_text())
