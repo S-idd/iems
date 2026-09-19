@@ -175,3 +175,20 @@ See [docs/troubleshooting.md](docs/troubleshooting.md) for common issues and sol
 ## License
 
 Copyright © 2024 IEMS Project. All rights reserved.
+## DCG contract CLI (binary integration)
+
+Run IEMS event-contract checks and record history in SQLite, PostgreSQL or MySQL
+using the packaged DCG binary. See [the live-demo walkthrough](docs/dcg-cli-demo.md)
+for installation, database settings, PASS/FAIL demos and the optional build gate.
+
+```bash
+./scripts/dcg.sh lint
+./scripts/dcg.sh check sqlite
+./scripts/dcg.sh demo sqlite
+```
+
+## PostgreSQL, MySQL, SQLite and DCG AI demo
+
+See [the database and AI walkthrough](docs/database-ai-demo.md) for the three
+local IEMS database profiles, guarded migrations, DCG check history, API smoke,
+and the packaged advisory model demo.
