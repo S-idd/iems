@@ -1,0 +1,359 @@
+{
+  "info": {
+    "name": "IEMS DCG Webhook Delivery Verification",
+    "description": "Read-only verification of the isolated DCG service outbox and separate IEMS DCG inbox after the webhook rehearsal. No retry or reset requests.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "basic",
+    "basic": [
+      {
+        "key": "username",
+        "value": "{{dcg_username}}",
+        "type": "string"
+      },
+      {
+        "key": "password",
+        "value": "{{dcg_password}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "DCG health",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{dcg_base_url}}/actuator/health",
+          "host": [
+            "{{dcg_base_url}}"
+          ],
+          "path": [
+            "actuator",
+            "health"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "IEMS health",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "{{iems_dcg_auth}}"
+          }
+        ],
+        "url": {
+          "raw": "{{iems_base_url}}/actuator/health",
+          "host": [
+            "{{iems_base_url}}"
+          ],
+          "path": [
+            "actuator",
+            "health"
+          ]
+        },
+        "auth": {
+          "type": "noauth"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "IEMS inbox rejects missing authorization",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{iems_base_url}}/api/dcg/events",
+          "host": [
+            "{{iems_base_url}}"
+          ],
+          "path": [
+            "api",
+            "dcg",
+            "events"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 401\", () => pm.response.to.have.status(401));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "online DCG delivery",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{dcg_base_url}}/api/notification-deliveries?runId={{online_run_id}}&sink=webhook",
+          "host": [
+            "{{dcg_base_url}}"
+          ],
+          "path": [
+            "api",
+            "notification-deliveries?runId={{online_run_id}}&sink=webhook"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "const rows=pm.response.json();",
+              "pm.test(\"one delivered webhook\", () => { pm.expect(rows).to.have.length(1); pm.expect(rows[0].status).to.eql(\"DELIVERED\"); pm.expect(rows[0].event.eventType).to.eql(\"CONTRACT_CHECK_FAILED\"); });",
+              "pm.environment.set(\"online_event_id\", rows[0].event.eventId);",
+              "pm.test(\"run correlated\", () => pm.expect(rows[0].event.runId).to.eql(pm.environment.get(\"online_run_id\")));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "online IEMS inbox",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "{{iems_dcg_auth}}"
+          }
+        ],
+        "url": {
+          "raw": "{{iems_base_url}}/api/dcg/events?runId={{online_run_id}}&eventType=CONTRACT_CHECK_FAILED",
+          "host": [
+            "{{iems_base_url}}"
+          ],
+          "path": [
+            "api",
+            "dcg",
+            "events?runId={{online_run_id}}&eventType=CONTRACT_CHECK_FAILED"
+          ]
+        },
+        "auth": {
+          "type": "noauth"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "const rows=pm.response.json();",
+              "pm.test(\"matching inbox event\", () => { pm.expect(rows).to.have.length(1); pm.expect(rows[0].eventId).to.eql(pm.environment.get(\"online_event_id\")); pm.expect(rows[0].runId).to.eql(pm.environment.get(\"online_run_id\")); pm.expect(rows[0].contractId).to.eql(\"iems.enrollment\"); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "retry DCG delivery",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{dcg_base_url}}/api/notification-deliveries?runId={{retry_run_id}}&sink=webhook",
+          "host": [
+            "{{dcg_base_url}}"
+          ],
+          "path": [
+            "api",
+            "notification-deliveries?runId={{retry_run_id}}&sink=webhook"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "const rows=pm.response.json();",
+              "pm.test(\"one delivered webhook\", () => { pm.expect(rows).to.have.length(1); pm.expect(rows[0].status).to.eql(\"DELIVERED\"); pm.expect(rows[0].event.eventType).to.eql(\"CONTRACT_CHECK_FAILED\"); });",
+              "pm.environment.set(\"retry_event_id\", rows[0].event.eventId);",
+              "pm.test(\"run correlated\", () => pm.expect(rows[0].event.runId).to.eql(pm.environment.get(\"retry_run_id\")));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "retry IEMS inbox",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "{{iems_dcg_auth}}"
+          }
+        ],
+        "url": {
+          "raw": "{{iems_base_url}}/api/dcg/events?runId={{retry_run_id}}&eventType=CONTRACT_CHECK_FAILED",
+          "host": [
+            "{{iems_base_url}}"
+          ],
+          "path": [
+            "api",
+            "dcg",
+            "events?runId={{retry_run_id}}&eventType=CONTRACT_CHECK_FAILED"
+          ]
+        },
+        "auth": {
+          "type": "noauth"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "const rows=pm.response.json();",
+              "pm.test(\"matching inbox event\", () => { pm.expect(rows).to.have.length(1); pm.expect(rows[0].eventId).to.eql(pm.environment.get(\"retry_event_id\")); pm.expect(rows[0].runId).to.eql(pm.environment.get(\"retry_run_id\")); pm.expect(rows[0].contractId).to.eql(\"iems.enrollment\"); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "DCG retry run result",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{dcg_base_url}}/checks/{{retry_run_id}}",
+          "host": [
+            "{{dcg_base_url}}"
+          ],
+          "path": [
+            "checks",
+            "{{retry_run_id}}"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "pm.test(\"check remains FAIL\", () => pm.expect(pm.response.json().status).to.eql(\"FAIL\"));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "DCG delivery dashboard",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{dcg_base_url}}/ui/notifications?runId={{retry_run_id}}",
+          "host": [
+            "{{dcg_base_url}}"
+          ],
+          "path": [
+            "ui",
+            "notifications?runId={{retry_run_id}}"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "pm.test(\"run and DELIVERED visible\", () => { pm.expect(pm.response.text()).to.include(pm.environment.get(\"retry_run_id\")); pm.expect(pm.response.text()).to.include(\"DELIVERED\"); });"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
