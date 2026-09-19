@@ -1,0 +1,31 @@
+-- Fresh databases only; do not mix with the legacy migration history.
+create table accessibility_reports (follow_up_date date, follow_up_required boolean, incident_date date, report_date date not null, resolved boolean, resolved_date date, assigned_to bigint, created_at timestamp not null, id integer, reported_by bigint, school_id bigint not null, student_id bigint not null, updated_at timestamp, related_disability varchar(50) check (related_disability in ('VISUAL','HEARING','PHYSICAL','COGNITIVE','SPEECH','MENTAL_HEALTH','AUTISM','MULTIPLE','OTHER')), severity varchar(50), location varchar(200), title varchar(200) not null, action_taken TEXT, description TEXT not null, primary key (id), foreign key (school_id) references schools(id), foreign key (student_id) references student_profiles(id));
+create table classrooms (capacity integer, is_accessible boolean, created_at timestamp not null, id integer, school_id bigint not null, updated_at timestamp, room_number varchar(20), building varchar(50), name varchar(100) not null, accessibility_features TEXT, primary key (id), foreign key (school_id) references schools(id));
+create table courses (credits integer, classroom_id bigint, created_at timestamp not null, id integer, instructor_id bigint, updated_at timestamp, academic_year varchar(20), course_code varchar(20) not null unique, semester varchar(100), name varchar(200) not null, description TEXT, primary key (id), foreign key (classroom_id) references classrooms(id), foreign key (instructor_id) references users(id));
+create table enrollments (completion_date date, enrollment_date date not null, grade numeric(5,2), letter_grade varchar(5), course_id bigint not null, created_at timestamp not null, id integer, student_id bigint not null, updated_at timestamp, status varchar(20), primary key (id), foreign key (course_id) references courses(id), foreign key (student_id) references student_profiles(id));
+create table notifications (is_read boolean not null, created_at timestamp not null, id integer, read_at timestamp, user_id bigint not null, type varchar(50), title varchar(200) not null, message TEXT not null, primary key (id), foreign key (user_id) references users(id));
+create table scholarship_applications (academic_merit_score integer, amount_approved numeric(10,2), amount_requested numeric(10,2) not null, application_date date not null, disbursement_date date, financial_need_score integer, created_at timestamp not null, id integer, reviewed_at timestamp, reviewed_by bigint, student_id bigint not null, updated_at timestamp, status varchar(20) not null check (status in ('PENDING','UNDER_REVIEW','APPROVED','REJECTED','DISBURSED','CANCELLED')), disbursement_reference varchar(100), scholarship_name varchar(200) not null, justification TEXT, purpose TEXT, review_comments TEXT, primary key (id), foreign key (student_id) references student_profiles(id));
+create table schools (active boolean not null, established_year integer, student_capacity integer, created_at timestamp not null, id integer, updated_at timestamp, phone varchar(20), zip_code varchar(20), code varchar(50) unique, city varchar(100), country varchar(100), district varchar(100), email varchar(100), state varchar(100), name varchar(200) not null, website varchar(200), address varchar(500), description TEXT, primary key (id));
+create table student_disabilities (student_profile_id bigint not null, disability_type varchar(255) check (disability_type in ('VISUAL','HEARING','PHYSICAL','COGNITIVE','SPEECH','MENTAL_HEALTH','AUTISM','MULTIPLE','OTHER')), foreign key (student_profile_id) references student_profiles(id));
+create table student_profiles (current_year integer, date_of_birth date, enrollment_date date, gpa numeric(4,2), graduation_date date, has_disability boolean, created_at timestamp not null, id integer, updated_at timestamp, user_id bigint not null unique, gender varchar(10), emergency_contact_phone varchar(20), student_number varchar(50) unique, emergency_contact_name varchar(100), major varchar(100), accommodations_needed TEXT, assistive_technology TEXT, medical_conditions TEXT, primary key (id), foreign key (user_id) references users(id));
+create table users (active boolean not null, email_verified boolean, created_at timestamp not null, id integer, last_login timestamp, refresh_token_expiry timestamp, school_id bigint, updated_at timestamp, phone varchar(20), role varchar(20) not null check (role in ('ADMIN','SCHOOL_ADMIN','TEACHER','STUDENT','PARENT','SUPPORT')), username varchar(50) not null unique, email varchar(100) not null unique, first_name varchar(100), last_name varchar(100), refresh_token varchar(500), password varchar(255) not null, primary key (id), foreign key (school_id) references schools(id));
+create index idx_accessibility_student on accessibility_reports (student_id);
+create index idx_accessibility_school on accessibility_reports (school_id);
+create index idx_accessibility_date on accessibility_reports (report_date);
+create index idx_classroom_school on classrooms (school_id);
+create index idx_classroom_name on classrooms (name);
+create index idx_course_classroom on courses (classroom_id);
+create index idx_enrollment_student on enrollments (student_id);
+create index idx_enrollment_course on enrollments (course_id);
+create index idx_notification_user on notifications (user_id);
+create index idx_notification_read on notifications (is_read);
+create index idx_notification_created on notifications (created_at);
+create index idx_scholarship_student on scholarship_applications (student_id);
+create index idx_scholarship_status on scholarship_applications (status);
+create index idx_scholarship_date on scholarship_applications (application_date);
+create index idx_school_name on schools (name);
+create index idx_school_active on schools (active);
+create index idx_student_user on student_profiles (user_id);
+create index idx_user_role on users (role);
+
+create unique index uq_schools_code_ignore_case on schools (lower(code));

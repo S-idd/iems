@@ -124,8 +124,11 @@ public class AuthService {
             throw new UnauthorizedException("Invalid refresh token");
         }
 
-        User user = userRepository.findByValidRefreshToken(refreshToken)
+        User user = userRepository.findByRefreshToken(refreshToken)
                 .orElseThrow(() -> new UnauthorizedException("Refresh token not found or expired"));
+        if (user.getRefreshTokenExpiry() == null || !user.getRefreshTokenExpiry().isAfter(LocalDateTime.now())) {
+            throw new UnauthorizedException("Refresh token not found or expired");
+        }
 
         String username = user.getUsername();
         String newAccessToken = tokenProvider.generateTokenFromUsername(username);

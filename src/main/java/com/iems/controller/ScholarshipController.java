@@ -50,9 +50,7 @@ public class ScholarshipController {
     public ResponseEntity<ScholarshipDto> createScholarship(
             @AuthenticationPrincipal UserPrincipal user,
             @Valid @RequestBody ScholarshipDto scholarshipDto) {
-        // Student ID will be taken from DTO or userPrincipal if needed
-        scholarshipDto.setStudentId(user.getId());
-        return ResponseEntity.ok(scholarshipService.createScholarship(scholarshipDto));
+        return ResponseEntity.ok(scholarshipService.createScholarshipForUser(user.getId(), scholarshipDto));
     }
 
     @PutMapping("/{id}")

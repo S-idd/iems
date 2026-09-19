@@ -1,5 +1,6 @@
 package com.iems.service;
 
+import com.iems.dcg.validation.ScholarshipAppliedEventBoundary;
 import com.iems.exception.BadRequestException;
 import com.iems.exception.ResourceNotFoundException;
 import com.iems.kafka.model.ScholarshipEvent;
@@ -31,6 +32,7 @@ import java.util.stream.Collectors;
  * Service for managing scholarship applications and processing.
  */
 @Service
+@Transactional(readOnly = true)
 public class ScholarshipService {
 
     @Autowired
@@ -41,6 +43,9 @@ public class ScholarshipService {
 
     @Autowired
     private EventPublisherService eventPublisher;
+
+    @Autowired
+    private ScholarshipAppliedEventBoundary appliedEventBoundary;
 
     @Autowired
     private TaskProducer taskProducer;
@@ -76,6 +81,15 @@ public class ScholarshipService {
 
     @Transactional
     @CacheEvict(value = "scholarships", allEntries = true)
+    public ScholarshipDto createScholarshipForUser(Long userId, ScholarshipDto dto) {
+        StudentProfile student = studentRepository.findByUserId(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Student", "userId", userId));
+        dto.setStudentId(student.getId());
+        return createScholarship(dto);
+    }
+
+    @Transactional
+    @CacheEvict(value = "scholarships", allEntries = true)
     public ScholarshipDto createScholarship(ScholarshipDto dto) {
         StudentProfile student = studentRepository.findById(dto.getStudentId())
                 .orElseThrow(() -> new ResourceNotFoundException("Student", "id", dto.getStudentId()));
@@ -99,7 +113,7 @@ public class ScholarshipService {
         event.setEventType("APPLIED");
         event.setStatus(ScholarshipStatus.PENDING);
         event.setAmount(saved.getAmountRequested());
-        eventPublisher.publishScholarshipEvent(event);
+        appliedEventBoundary.publish(event);
 
         // Send notification email
         sendScholarshipNotification(student, "Scholarship Application Received", 

@@ -56,6 +56,8 @@ public class SecurityConfig {
                 // Public endpoints
                 .requestMatchers(
                     "/api/auth/**",
+                    "/api/dcg/webhook",
+                    "/api/dcg/events",
                     "/actuator/health",
                     "/actuator/info",
                     "/actuator/prometheus",

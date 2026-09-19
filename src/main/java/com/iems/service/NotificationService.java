@@ -32,8 +32,8 @@ public class NotificationService {
     }
 
     @Transactional
-    public void markAsRead(Long notificationId) {
-        Notification notification = notificationRepository.findById(notificationId)
+    public void markAsRead(Long notificationId, Long userId) {
+        Notification notification = notificationRepository.findByIdAndUserId(notificationId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Notification", "id", notificationId));
         
         notification.setIsRead(true);
@@ -47,8 +47,8 @@ public class NotificationService {
     }
 
     @Transactional
-    public void deleteNotification(Long notificationId) {
-        Notification notification = notificationRepository.findById(notificationId)
+    public void deleteNotification(Long notificationId, Long userId) {
+        Notification notification = notificationRepository.findByIdAndUserId(notificationId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Notification", "id", notificationId));
         notificationRepository.delete(notification);
     }

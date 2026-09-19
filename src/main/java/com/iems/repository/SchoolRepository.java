@@ -1,6 +1,7 @@
 package com.iems.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,6 +12,12 @@ import com.iems.model.entity.School;
 
 @Repository
 public interface SchoolRepository extends JpaRepository<School, Long> {
+    List<School> findByCityIgnoreCaseAndActiveTrueOrderByNameAscIdAsc(String city);
+    List<School> findByStateIgnoreCaseAndActiveTrueOrderByNameAscIdAsc(String state);
+    List<School> findByDistrictIgnoreCaseAndActiveTrueOrderByNameAscIdAsc(String district);
+    List<School> findByNameContainingIgnoreCaseAndActiveTrueOrderByNameAscIdAsc(String keyword);
+    Optional<School> findByCodeIgnoreCaseAndActiveTrue(String code);
+    Optional<School> findByCodeIgnoreCase(String code);
     List<School> findByActiveTrue();
     Page<School> findByActiveTrue(Pageable pageable);
     List<School> findByNameContainingIgnoreCase(String name);

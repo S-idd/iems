@@ -26,8 +26,15 @@ public interface ScholarshipRepository extends JpaRepository<ScholarshipApplicat
         @Param("endDate") LocalDate endDate
     );
     
-    @Query(value = "SELECT AVG(EXTRACT(EPOCH FROM (reviewed_at - created_at)) / 86400.0) FROM scholarship_applications " +
-                   "WHERE status IN ('APPROVED','REJECTED')",
-           nativeQuery = true)
-    Double getAverageProcessingTimeDays();
+    @Query("SELECT s.createdAt, s.reviewedAt FROM ScholarshipApplication s " +
+           "WHERE s.status IN (com.iems.model.enums.ScholarshipStatus.APPROVED, " +
+           "com.iems.model.enums.ScholarshipStatus.REJECTED) AND s.reviewedAt IS NOT NULL")
+    List<Object[]> findProcessingTimes();
+
+    default Double getAverageProcessingTimeDays() {
+        return findProcessingTimes().stream().mapToDouble(row ->
+                java.time.Duration.between((java.time.LocalDateTime) row[0],
+                        (java.time.LocalDateTime) row[1]).toMillis() / 86400000.0)
+                .average().stream().boxed().findFirst().orElse(null);
+    }
 }

@@ -1,0 +1,4 @@
+# Reviewed portable demo migrations; update only after a DCG schema gate review.
+postgres/V1__iems_baseline.sql=d283c6bbb9afe65af8135c28abb8ad6d0dce4348676d98f11487c457e0dd75e5
+mysql/V1__iems_baseline.sql=08c9ad100bdcdae9652c97e6d36a78dc0b948bf41d4c1e994afd0e97647e3df1
+sqlite/V1__iems_baseline.sql=99609b7ac9ccf817fa3d01f1f4d590c0c6deb0846aaf58f9b4e55688b22901bc

@@ -1,6 +1,8 @@
 package com.iems.service;
 
 import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.iems.exception.ResourceNotFoundException;
+import com.iems.exception.BadRequestException;
 import com.iems.model.dto.SchoolDto;
 import com.iems.model.dto.SchoolResponseDTO;
 import com.iems.model.entity.School;
@@ -60,6 +63,7 @@ public class SchoolService {
     @Transactional
     @CacheEvict(value = "schools", allEntries = true)
     public SchoolDto createSchool(SchoolDto schoolDto) {
+        validateCodeAvailable(schoolDto.getCode(), null);
         School school = convertToEntity(schoolDto);
         School savedSchool = schoolRepository.save(school);
         return convertToDto(savedSchool);
@@ -74,6 +78,9 @@ public class SchoolService {
         School school = schoolRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("School", "id", id));
 
+        validateCodeAvailable(schoolDto.getCode(), id);
+        school.setCode(normalizeCode(schoolDto.getCode()));
+        school.setDistrict(trimOptional(schoolDto.getDistrict()));
         school.setName(schoolDto.getName());
         school.setAddress(schoolDto.getAddress());
         school.setCity(schoolDto.getCity());
@@ -106,6 +113,8 @@ public class SchoolService {
     private SchoolDto convertToDto(School school) {
         SchoolDto dto = new SchoolDto();
         dto.setId(school.getId());
+        dto.setCode(school.getCode());
+        dto.setDistrict(school.getDistrict());
         dto.setName(school.getName());
         dto.setAddress(school.getAddress());
         dto.setCity(school.getCity());
@@ -124,6 +133,8 @@ public class SchoolService {
 
     private School convertToEntity(SchoolDto dto) {
         School school = new School();
+        school.setCode(normalizeCode(dto.getCode()));
+        school.setDistrict(trimOptional(dto.getDistrict()));
         school.setName(dto.getName());
         school.setAddress(dto.getAddress());
         school.setCity(dto.getCity());
@@ -140,23 +151,82 @@ public class SchoolService {
         return school;
     }
 
+    @Transactional(readOnly = true)
     public List<SchoolResponseDTO> getSchoolsByCity(String city) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return schoolRepository.findByCityIgnoreCaseAndActiveTrueOrderByNameAscIdAsc(
+                requireLookup(city, "city", 100)).stream().map(this::convertToResponse).toList();
     }
 
+    @Transactional(readOnly = true)
     public List<SchoolResponseDTO> getSchoolsByState(String state) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return schoolRepository.findByStateIgnoreCaseAndActiveTrueOrderByNameAscIdAsc(
+                requireLookup(state, "state", 100)).stream().map(this::convertToResponse).toList();
     }
 
+    @Transactional(readOnly = true)
     public List<SchoolResponseDTO> getSchoolsByDistrict(String district) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return schoolRepository.findByDistrictIgnoreCaseAndActiveTrueOrderByNameAscIdAsc(
+                requireLookup(district, "district", 100)).stream().map(this::convertToResponse).toList();
     }
 
+    @Transactional(readOnly = true)
     public List<SchoolResponseDTO> searchSchools(String keyword) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return schoolRepository.findByNameContainingIgnoreCaseAndActiveTrueOrderByNameAscIdAsc(
+                requireLookup(keyword, "keyword", 200)).stream().map(this::convertToResponse).toList();
     }
 
+    @Transactional(readOnly = true)
     public SchoolResponseDTO getSchoolByCode(String code) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        String value = requireLookup(code, "code", 50);
+        return schoolRepository.findByCodeIgnoreCaseAndActiveTrue(value)
+                .map(this::convertToResponse)
+                .orElseThrow(() -> new ResourceNotFoundException("School", "code", value));
+    }
+
+    private String requireLookup(String value, String field, int maxLength) {
+        if (value == null || value.isBlank() || value.trim().length() > maxLength) {
+            throw new BadRequestException(field + " must contain 1 to " + maxLength + " characters");
+        }
+        return value.trim();
+    }
+
+    private String trimOptional(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
+    }
+
+    private String normalizeCode(String code) {
+        String value = trimOptional(code);
+        return value == null ? null : value.toUpperCase(Locale.ROOT);
+    }
+
+    private void validateCodeAvailable(String code, Long currentId) {
+        String normalized = normalizeCode(code);
+        if (normalized == null) return;
+        schoolRepository.findByCodeIgnoreCase(normalized).ifPresent(existing -> {
+            if (!Objects.equals(existing.getId(), currentId)) {
+                throw new BadRequestException("School code already exists: " + normalized);
+            }
+        });
+    }
+
+    private SchoolResponseDTO convertToResponse(School school) {
+        SchoolResponseDTO dto = new SchoolResponseDTO();
+        dto.setId(school.getId());
+        dto.setName(school.getName());
+        dto.setCode(school.getCode());
+        dto.setAddress(school.getAddress());
+        dto.setCity(school.getCity());
+        dto.setState(school.getState());
+        dto.setDistrict(school.getDistrict());
+        dto.setZipCode(school.getZipCode());
+        dto.setContactEmail(school.getEmail());
+        dto.setContactPhone(school.getPhone());
+        dto.setWebsite(school.getWebsite());
+        dto.setEstablishedYear(school.getEstablishedYear());
+        dto.setDescription(school.getDescription());
+        dto.setActive(school.getActive());
+        dto.setCreatedAt(school.getCreatedAt());
+        dto.setUpdatedAt(school.getUpdatedAt());
+        return dto;
     }
 }

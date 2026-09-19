@@ -29,6 +29,7 @@ import com.iems.repository.StudentRepository;
  * Service for managing accessibility reports and accommodations.
  */
 @Service
+@Transactional(readOnly = true)
 public class AccessibilityService {
 
     @Autowired
