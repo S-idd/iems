@@ -130,6 +130,7 @@ def isolated_project(evidence: Path) -> Path:
     app = evidence / 'runtime/api-project'
     app.mkdir(parents=True, mode=0o700)
     shutil.copytree(ROOT / 'contracts', app / 'contracts')
+    shutil.copytree(ROOT / 'runtime-contracts', app / 'runtime-contracts')
     shutil.copytree(ROOT / 'scripts', app / 'scripts', ignore=shutil.ignore_patterns('__pycache__'))
     (app / 'target').mkdir()
     os.link(ROOT / 'target' / JAR, app / 'target' / JAR)

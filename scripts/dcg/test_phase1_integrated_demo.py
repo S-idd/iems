@@ -45,6 +45,15 @@ class IntegratedSafeguardsTest(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, 'non-disposable|real IEMS'):
             demo.assert_disposable_targets(evidence, owned_app, demo.ROOT / '.dcg/data/iems.db', owned_history)
 
+    def test_isolated_project_contains_runtime_validation_contract(self):
+        evidence = self.evidence()
+        app = demo.isolated_project(evidence)
+        runtime_contract = app / 'runtime-contracts/iems.scholarship.applied/v1.json'
+        self.assertEqual(
+            (demo.ROOT / 'runtime-contracts/iems.scholarship.applied/v1.json').read_bytes(),
+            runtime_contract.read_bytes(),
+        )
+
     def test_required_subprocess_failure_propagates_and_cleans_marker(self):
         evidence = self.evidence()
         with self.assertRaisesRegex(RuntimeError, 'exited 7'):
