@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "integer"
+    },
+    "schoolId": {
+      "type": "integer"
+    },
+    "schoolName": {
+      "type": "string"
+    },
+    "studentId": {
+      "type": "integer"
+    },
+    "studentName": {
+      "type": "string"
+    },
+    "eventType": {
+      "type": "string"
+    },
+    "disabilityType": {
+      "type": "string",
+      "enum": [
+        "VISUAL",
+        "HEARING",
+        "PHYSICAL",
+        "COGNITIVE",
+        "SPEECH",
+        "MENTAL_HEALTH",
+        "AUTISM",
+        "MULTIPLE",
+        "OTHER"
+      ]
+    },
+    "severity": {
+      "type": "string"
+    },
+    "timestamp": {
+      "type": "string"
+    }
+  },
+  "required": []
+}

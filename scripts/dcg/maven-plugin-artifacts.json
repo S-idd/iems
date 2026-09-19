@@ -1,0 +1,34 @@
+{
+  "source_commit": "7379c8b8fd323e4461fd1675b866f7547c28985d",
+  "java_build_log_sha256": "2b7297474956279b33fece66869d6e78efef1a85a92ba2316945fccd76bac837",
+  "artifacts": {
+    "com/ideas/contracts/data-contract-governance/4.0.0-rc.1/data-contract-governance-4.0.0-rc.1.pom": {
+      "source": "pom.xml",
+      "sha256": "9b42219ddd7eab81504c96f0ecb7b3278da20ab8976dfbbd77fb486296192b56"
+    },
+    "com/ideas/contracts/contract-core/4.0.0-rc.1/contract-core-4.0.0-rc.1.pom": {
+      "source": "contract-core/pom.xml",
+      "sha256": "5769e524067dd788a6e4e78561df5c005cfe720f917fbaa8d5990c6a760ecb21"
+    },
+    "com/ideas/contracts/contract-core/4.0.0-rc.1/contract-core-4.0.0-rc.1.jar": {
+      "source": "contract-core/target/contract-core-4.0.0-rc.1.jar",
+      "sha256": "09bb302a40cd333eefd397b7d2df052bda5ee522307a4259974739a3e8f268fc"
+    },
+    "com/ideas/contracts/contract-build-support/4.0.0-rc.1/contract-build-support-4.0.0-rc.1.pom": {
+      "source": "contract-build-support/pom.xml",
+      "sha256": "84676c2401f9a63579758efe59c8781864108280cfd28bcf4986d2607f9df5ab"
+    },
+    "com/ideas/contracts/contract-build-support/4.0.0-rc.1/contract-build-support-4.0.0-rc.1.jar": {
+      "source": "contract-build-support/target/contract-build-support-4.0.0-rc.1.jar",
+      "sha256": "2045c139428863dd4d98affe6129aea76565e8d838d53cc90fe88713bc31b91c"
+    },
+    "com/ideas/contracts/contract-maven-plugin/4.0.0-rc.1/contract-maven-plugin-4.0.0-rc.1.pom": {
+      "source": "contract-maven-plugin/pom.xml",
+      "sha256": "8608168cf8d8a505d5003f27e4ee964bd4048cff53df3bc9f10582031c8dcc98"
+    },
+    "com/ideas/contracts/contract-maven-plugin/4.0.0-rc.1/contract-maven-plugin-4.0.0-rc.1.jar": {
+      "source": "contract-maven-plugin/target/contract-maven-plugin-4.0.0-rc.1.jar",
+      "sha256": "9879b24feac6351a6c3481a87976630c049639c79849490a6b50d0a4117326d1"
+    }
+  }
+}
