@@ -25,6 +25,7 @@ import com.iems.repository.UserRepository;
  * Service for managing student profiles and related operations.
  */
 @Service
+@Transactional(readOnly = true)
 public class StudentService {
 
     @Autowired
@@ -224,7 +225,7 @@ public class StudentService {
         dto.setEmergencyContactName(student.getEmergencyContactName());
         dto.setEmergencyContactPhone(student.getEmergencyContactPhone());
         dto.setHasDisability(student.getHasDisability());
-        dto.setDisabilities(student.getDisabilities());
+        dto.setDisabilities(student.getDisabilities() == null ? null : new java.util.HashSet<>(student.getDisabilities()));
         dto.setAccommodationsNeeded(student.getAccommodationsNeeded());
         dto.setAssistiveTechnology(student.getAssistiveTechnology());
         dto.setEnrollmentDate(student.getEnrollmentDate());

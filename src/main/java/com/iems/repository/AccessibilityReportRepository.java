@@ -348,11 +348,16 @@ public interface AccessibilityReportRepository extends JpaRepository<Accessibili
      * @param schoolId the school ID
      * @return average resolution time in days
      */
-    @Query(value = "SELECT AVG(EXTRACT(EPOCH FROM (resolved_date - report_date)) / 86400.0) " +
-                   "FROM accessibility_reports " +
-                   "WHERE school_id = :schoolId AND resolved = true AND resolved_date IS NOT NULL",
-           nativeQuery = true)
-    Double getAverageResolutionTimeDays(@Param("schoolId") Long schoolId);
+    @Query("SELECT a.reportDate, a.resolvedDate FROM AccessibilityReport a " +
+           "WHERE a.school.id = :schoolId AND a.resolved = true AND a.resolvedDate IS NOT NULL")
+    List<Object[]> findResolutionDates(@Param("schoolId") Long schoolId);
+
+    default Double getAverageResolutionTimeDays(Long schoolId) {
+        return findResolutionDates(schoolId).stream().mapToLong(row ->
+                java.time.temporal.ChronoUnit.DAYS.between((java.time.LocalDate) row[0],
+                        (java.time.LocalDate) row[1]))
+                .average().stream().boxed().findFirst().orElse(null);
+    }
 
     /**
      * Get resolution rate (percentage) for a school.
@@ -384,16 +389,19 @@ public interface AccessibilityReportRepository extends JpaRepository<Accessibili
      * @param weeksAgo number of weeks to look back
      * @return list of objects containing [week_number, count]
      */
-    @Query(value = "SELECT DATE_TRUNC('week', report_date) as week, COUNT(*) " +
-           "FROM accessibility_reports " +
-           "WHERE school_id = :schoolId " +
-           "AND report_date >= CURRENT_DATE - INTERVAL ':weeksAgo weeks' " +
-           "GROUP BY week " +
-           "ORDER BY week DESC", nativeQuery = true)
-    List<Object[]> getWeeklyReportTrend(
-        @Param("schoolId") Long schoolId,
-        @Param("weeksAgo") Integer weeksAgo
-    );
+    @Query("SELECT a.reportDate FROM AccessibilityReport a WHERE a.school.id = :schoolId " +
+           "AND a.reportDate >= :since ORDER BY a.reportDate DESC")
+    List<java.time.LocalDate> findReportDatesSince(@Param("schoolId") Long schoolId,
+                                                @Param("since") java.time.LocalDate since);
+
+    default List<Object[]> getWeeklyReportTrend(Long schoolId, Integer weeksAgo) {
+        if (weeksAgo == null || weeksAgo < 0) throw new IllegalArgumentException("weeksAgo must be non-negative");
+        var groups = new java.util.TreeMap<java.time.LocalDate, Long>(java.util.Comparator.reverseOrder());
+        findReportDatesSince(schoolId, java.time.LocalDate.now().minusWeeks(weeksAgo)).forEach(date ->
+                groups.merge(date.with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY)),
+                        1L, Long::sum));
+        return groups.entrySet().stream().map(entry -> new Object[]{entry.getKey().atStartOfDay(), entry.getValue()}).toList();
+    }
 
     // ==================== Search Queries ====================
 
@@ -473,12 +481,13 @@ public interface AccessibilityReportRepository extends JpaRepository<Accessibili
      * @param days number of days to look back
      * @return list of recent reports
      */
-       @Query(value = "SELECT * FROM accessibility_reports WHERE school_id = :schoolId " +
-                               "AND report_date >= CURRENT_DATE - (:days * INTERVAL '1 day') " +
-                               "ORDER BY report_date DESC",
-                 nativeQuery = true)
-       List<AccessibilityReport> findRecentBySchoolId(
-              @Param("schoolId") Long schoolId,
-              @Param("days") Integer days
-       );
+    @Query("SELECT a FROM AccessibilityReport a WHERE a.school.id = :schoolId " +
+           "AND a.reportDate >= :since ORDER BY a.reportDate DESC")
+    List<AccessibilityReport> findRecentSince(@Param("schoolId") Long schoolId,
+                                            @Param("since") java.time.LocalDate since);
+
+    default List<AccessibilityReport> findRecentBySchoolId(Long schoolId, Integer days) {
+        if (days == null || days < 0) throw new IllegalArgumentException("days must be non-negative");
+        return findRecentSince(schoolId, java.time.LocalDate.now().minusDays(days));
+    }
 }

@@ -2,12 +2,21 @@ package com.iems.model.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 public class SchoolDto {
     private Long id;
 
     @NotBlank(message = "School name is required")
     private String name;
+
+    @Size(max = 50)
+    @Pattern(regexp = "[A-Za-z0-9]+", message = "School code must contain only letters and numbers")
+    private String code;
+
+    @Size(max = 100)
+    private String district;
 
     private String address;
     private String city;
@@ -24,6 +33,11 @@ public class SchoolDto {
     private Boolean active;
     private Integer establishedYear;
     private Integer studentCapacity;
+
+    public String getCode() { return code; }
+    public void setCode(String code) { this.code = code; }
+    public String getDistrict() { return district; }
+    public void setDistrict(String district) { this.district = district; }
 
     // Getters and Setters
     public Long getId() {

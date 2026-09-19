@@ -1,0 +1,41 @@
+{
+  "name": "IEMS DCG webhook isolated rehearsal",
+  "values": [
+    {
+      "key": "dcg_base_url",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "key": "iems_base_url",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "key": "dcg_username",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "key": "dcg_password",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "key": "iems_dcg_auth",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "key": "online_run_id",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "key": "retry_run_id",
+      "value": "",
+      "enabled": true
+    }
+  ],
+  "_postman_variable_scope": "environment"
+}

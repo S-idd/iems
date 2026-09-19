@@ -29,6 +29,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
  * Redis configuration for caching and session management.
  * Configures connection factory, cache manager, and Redis templates.
  */
+@org.springframework.context.annotation.Profile("!db-demo")
 @Configuration
 @EnableCaching
 public class RedisConfig {

@@ -1,51 +1,45 @@
 {
   "info": {
-    "name": "IEMS API Collection",
-    "description": "Complete API collection for Inclusive Education Management System",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "_exporter_id": "12345"
+    "name": "IEMS API | Live Demo",
+    "description": "Run the whole collection in order against a disposable IEMS database. Import the IEMS Demo environment, set adminPassword, start the local API, and seed one demo notification as described in postman/README.md. Requests create their own school, student and scholarship records, then demonstrate search, state transitions, access control and cleanup. Every IEMS controller route is covered. DCG checks are a separate demo.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:8080",
-      "type": "string"
-    },
-    {
-      "key": "accessToken",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "schoolId",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "studentId",
-      "value": "",
-      "type": "string"
+      "value": "http://127.0.0.1:8090"
     }
   ],
   "item": [
     {
       "name": "Authentication",
+      "description": "Start here: log in as demo-admin and initialize a fresh run.",
       "item": [
         {
-          "name": "Register Admin",
+          "name": "01 Login demo admin",
           "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.variables.get('adminPassword')) throw new Error('Set adminPassword in the IEMS Demo environment before running.');",
+                  "['adminToken','studentToken','studentRefreshToken','schoolId','studentUserId','studentId','scholarshipId','rejectId','cancelId','reportId','notificationId'].forEach(key => pm.collectionVariables.unset(key));",
+                  "pm.collectionVariables.set('runId', Date.now().toString(36) + Math.random().toString(36).slice(2, 6));",
+                  "pm.collectionVariables.set('userPassword', 'Demo-' + pm.collectionVariables.get('runId') + '-Pass!');"
+                ]
+              }
+            },
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test(\"Response has username\", function () {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.username).to.eql('admin');",
-                  "});"
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const result = pm.response.json();",
+                  "pm.test(\"!!result.accessToken\", () => pm.expect(!!result.accessToken).to.be.true);",
+                  "pm.test(\"result.user.role === 'ADMIN'\", () => pm.expect(result.user.role === 'ADMIN').to.be.true);",
+                  "pm.collectionVariables.set('adminToken', String(result.accessToken));"
                 ]
               }
             }
@@ -58,71 +52,16 @@
                 "value": "application/json"
               }
             ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "Start here. Logs in with the local demo-admin account, clears IDs from a previous run, and creates a unique run ID. Set adminPassword in the environment before running.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"admin123\",\n  \"email\": \"admin@iems.com\",\n  \"firstName\": \"Admin\",\n  \"lastName\": \"User\",\n  \"role\": \"ADMIN\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/register",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "register"]
-            }
-          }
-        },
-        {
-          "name": "Login",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "var jsonData = pm.response.json();",
-                  "pm.collectionVariables.set(\"accessToken\", jsonData.accessToken);",
-                  "",
-                  "pm.test(\"Has access token\", function () {",
-                  "    pm.expect(jsonData.accessToken).to.be.a('string');",
-                  "});"
-                ]
+              "raw": "{\n  \"username\": \"demo-admin\",\n  \"password\": \"{{adminPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
               }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"admin123\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "login"]
-            }
-          }
-        },
-        {
-          "name": "Logout",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/logout",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "logout"]
             }
           }
         }
@@ -130,16 +69,21 @@
     },
     {
       "name": "Schools",
+      "description": "Create a school and demonstrate listing, lookup, filters, search and update.",
       "item": [
         {
-          "name": "Create School",
+          "name": "01 Create school",
           "event": [
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
-                  "var jsonData = pm.response.json();",
-                  "pm.collectionVariables.set(\"schoolId\", jsonData.id);"
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const result = pm.response.json();",
+                  "pm.test(\"!!result.data.id\", () => pm.expect(!!result.data.id).to.be.true);",
+                  "pm.test(\"result.data.name.includes('Postman School')\", () => pm.expect(result.data.name.includes('Postman School')).to.be.true);",
+                  "pm.collectionVariables.set('schoolId', String(result.data.id));"
                 ]
               }
             }
@@ -148,56 +92,280 @@
             "method": "POST",
             "header": [
               {
-                "key": "Content-Type",
-                "value": "application/json"
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
               },
               {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
+                "key": "Content-Type",
+                "value": "application/json"
               }
             ],
+            "url": "{{baseUrl}}/api/schools",
+            "description": "POST /api/schools. Run the collection in order so earlier requests provide the required IDs and tokens.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Inclusive High School\",\n  \"address\": \"123 Main Street\",\n  \"city\": \"Springfield\",\n  \"state\": \"IL\",\n  \"zipCode\": \"62701\",\n  \"country\": \"USA\",\n  \"phone\": \"555-0123\",\n  \"email\": \"info@inclusivehigh.edu\",\n  \"establishedYear\": 1990,\n  \"studentCapacity\": 1000\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/schools",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "schools"]
+              "raw": "{\n  \"name\": \"Postman School {{runId}}\",\n  \"code\": \"P{{runId}}\",\n  \"city\": \"Bengaluru\",\n  \"state\": \"Karnataka\",\n  \"district\": \"Bengaluru Urban\",\n  \"active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             }
           }
         },
         {
-          "name": "Get All Schools",
+          "name": "02 List active",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const result = pm.response.json();",
+                  "pm.test(\"result.data.some(x => String(x.id) === pm.collectionVariables.get('schoolId'))\", () => pm.expect(result.data.some(x => String(x.id) === pm.collectionVariables.get('schoolId'))).to.be.true);"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
+                "value": "Bearer {{adminToken}}"
               }
             ],
-            "url": {
-              "raw": "{{baseUrl}}/api/schools/active",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "schools", "active"]
-            }
+            "url": "{{baseUrl}}/api/schools/active",
+            "description": "GET /api/schools/active. Run the collection in order so earlier requests provide the required IDs and tokens."
           }
         },
         {
-          "name": "Get School By ID",
+          "name": "03 List paged",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const result = pm.response.json();",
+                  "pm.test(\"Array.isArray(result.data.content)\", () => pm.expect(Array.isArray(result.data.content)).to.be.true);"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
+                "value": "Bearer {{adminToken}}"
               }
             ],
-            "url": {
-              "raw": "{{baseUrl}}/api/schools/{{schoolId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "schools", "{{schoolId}}"]
+            "url": "{{baseUrl}}/api/schools?page=0&size=20",
+            "description": "GET /api/schools?page=0&size=20. Run the collection in order so earlier requests provide the required IDs and tokens."
+          }
+        },
+        {
+          "name": "04 Get by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const result = pm.response.json();",
+                  "pm.test(\"String(result.data.id) === pm.collectionVariables.get('schoolId')\", () => pm.expect(String(result.data.id) === pm.collectionVariables.get('schoolId')).to.be.true);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/schools/{{schoolId}}",
+            "description": "GET /api/schools/{{schoolId}}. Run the collection in order so earlier requests provide the required IDs and tokens."
+          }
+        },
+        {
+          "name": "05 Get by city",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const result = pm.response.json();",
+                  "pm.test(\"result.data.some(x => String(x.id) === pm.collectionVariables.get('schoolId'))\", () => pm.expect(result.data.some(x => String(x.id) === pm.collectionVariables.get('schoolId'))).to.be.true);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/schools/city/bengaluru",
+            "description": "GET /api/schools/city/bengaluru. Run the collection in order so earlier requests provide the required IDs and tokens."
+          }
+        },
+        {
+          "name": "06 Get by state",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const result = pm.response.json();",
+                  "pm.test(\"result.data.some(x => String(x.id) === pm.collectionVariables.get('schoolId'))\", () => pm.expect(result.data.some(x => String(x.id) === pm.collectionVariables.get('schoolId'))).to.be.true);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/schools/state/karnataka",
+            "description": "GET /api/schools/state/karnataka. Run the collection in order so earlier requests provide the required IDs and tokens."
+          }
+        },
+        {
+          "name": "07 Get by district",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const result = pm.response.json();",
+                  "pm.test(\"result.data.some(x => String(x.id) === pm.collectionVariables.get('schoolId'))\", () => pm.expect(result.data.some(x => String(x.id) === pm.collectionVariables.get('schoolId'))).to.be.true);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/schools/district/bengaluru%20urban",
+            "description": "GET /api/schools/district/bengaluru%20urban. Run the collection in order so earlier requests provide the required IDs and tokens."
+          }
+        },
+        {
+          "name": "08 Search",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const result = pm.response.json();",
+                  "pm.test(\"result.data.some(x => String(x.id) === pm.collectionVariables.get('schoolId'))\", () => pm.expect(result.data.some(x => String(x.id) === pm.collectionVariables.get('schoolId'))).to.be.true);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/schools/search?keyword=Postman",
+            "description": "GET /api/schools/search?keyword=Postman. Run the collection in order so earlier requests provide the required IDs and tokens."
+          }
+        },
+        {
+          "name": "09 Get by code",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const result = pm.response.json();",
+                  "pm.test(\"String(result.data.id) === pm.collectionVariables.get('schoolId')\", () => pm.expect(String(result.data.id) === pm.collectionVariables.get('schoolId')).to.be.true);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/schools/code/P{{runId}}",
+            "description": "GET /api/schools/code/P{{runId}}. Run the collection in order so earlier requests provide the required IDs and tokens."
+          }
+        },
+        {
+          "name": "10 Update school",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const result = pm.response.json();",
+                  "pm.test(\"result.data.name.includes('Updated Postman')\", () => pm.expect(result.data.name.includes('Updated Postman')).to.be.true);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/schools/{{schoolId}}",
+            "description": "PUT /api/schools/{{schoolId}}. Run the collection in order so earlier requests provide the required IDs and tokens.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Postman School {{runId}}\",\n  \"code\": \"P{{runId}}\",\n  \"city\": \"Bengaluru\",\n  \"state\": \"Karnataka\",\n  \"district\": \"Bengaluru Urban\",\n  \"active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             }
           }
         }
@@ -205,16 +373,130 @@
     },
     {
       "name": "Students",
+      "description": "Register and authenticate a student, refresh the token, then demonstrate student profile endpoints.",
       "item": [
         {
-          "name": "Register Student",
+          "name": "Student sign-in",
+          "description": "These requests need the school created in the previous folder.",
+          "item": [
+            {
+              "name": "01 Register student user",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                      "const result = pm.response.json();",
+                      "pm.test(\"result.role === 'STUDENT'\", () => pm.expect(result.role === 'STUDENT').to.be.true);",
+                      "pm.test(\"!!result.id\", () => pm.expect(!!result.id).to.be.true);",
+                      "pm.collectionVariables.set('studentUserId', String(result.id));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{adminToken}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/api/auth/register",
+                "description": "POST /api/auth/register. Run the collection in order so earlier requests provide the required IDs and tokens.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"student{{runId}}\",\n  \"password\": \"{{userPassword}}\",\n  \"email\": \"student{{runId}}@example.test\",\n  \"role\": \"STUDENT\",\n  \"firstName\": \"Demo\",\n  \"lastName\": \"Student\",\n  \"schoolId\": \"{{schoolId}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "02 Login student",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                      "const result = pm.response.json();",
+                      "pm.test(\"!!result.accessToken\", () => pm.expect(!!result.accessToken).to.be.true);",
+                      "pm.test(\"!!result.refreshToken\", () => pm.expect(!!result.refreshToken).to.be.true);",
+                      "pm.collectionVariables.set('studentToken', String(result.accessToken));",
+                      "pm.collectionVariables.set('studentRefreshToken', result.refreshToken);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/api/auth/login",
+                "description": "POST /api/auth/login. Run the collection in order so earlier requests provide the required IDs and tokens.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"student{{runId}}\",\n  \"password\": \"{{userPassword}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "03 Refresh student token",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                      "const result = pm.response.json();",
+                      "pm.test(\"!!result.accessToken\", () => pm.expect(!!result.accessToken).to.be.true);",
+                      "pm.collectionVariables.set('studentToken', String(result.accessToken));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": "{{baseUrl}}/api/auth/refresh-token?refreshToken={{studentRefreshToken}}",
+                "description": "POST /api/auth/refresh-token?refreshToken={{studentRefreshToken}}. Run the collection in order so earlier requests provide the required IDs and tokens."
+              }
+            }
+          ]
+        },
+        {
+          "name": "01 Create student profile",
           "event": [
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
-                  "var jsonData = pm.response.json();",
-                  "pm.collectionVariables.set(\"studentId\", jsonData.id);"
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const result = pm.response.json();",
+                  "pm.test(\"!!result.data.id\", () => pm.expect(!!result.data.id).to.be.true);",
+                  "pm.collectionVariables.set('studentId', String(result.data.id));"
                 ]
               }
             }
@@ -223,35 +505,253 @@
             "method": "POST",
             "header": [
               {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
                 "key": "Content-Type",
                 "value": "application/json"
               }
             ],
+            "url": "{{baseUrl}}/api/students",
+            "description": "POST /api/students. Run the collection in order so earlier requests provide the required IDs and tokens.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"username\": \"student1\",\n  \"password\": \"student123\",\n  \"email\": \"student1@school.com\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"role\": \"STUDENT\",\n  \"schoolId\": {{schoolId}}\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/register",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "register"]
+              "raw": "{\n  \"userId\": \"{{studentUserId}}\",\n  \"studentNumber\": \"N{{runId}}\",\n  \"hasDisability\": true,\n  \"disabilities\": [\n    \"VISUAL\"\n  ],\n  \"currentYear\": 2,\n  \"gpa\": 3.5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             }
           }
         },
         {
-          "name": "Get All Students",
+          "name": "02 List paged",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const result = pm.response.json();",
+                  "pm.test(\"Array.isArray(result.data.content)\", () => pm.expect(Array.isArray(result.data.content)).to.be.true);"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
+                "value": "Bearer {{adminToken}}"
               }
             ],
-            "url": {
-              "raw": "{{baseUrl}}/api/students",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "students"]
+            "url": "{{baseUrl}}/api/students?page=0&size=20",
+            "description": "GET /api/students?page=0&size=20. Run the collection in order so earlier requests provide the required IDs and tokens."
+          }
+        },
+        {
+          "name": "03 Get by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const result = pm.response.json();",
+                  "pm.test(\"String(result.data.id) === pm.collectionVariables.get('studentId')\", () => pm.expect(String(result.data.id) === pm.collectionVariables.get('studentId')).to.be.true);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/students/{{studentId}}",
+            "description": "GET /api/students/{{studentId}}. Run the collection in order so earlier requests provide the required IDs and tokens."
+          }
+        },
+        {
+          "name": "04 Get by user",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const result = pm.response.json();",
+                  "pm.test(\"String(result.data.id) === pm.collectionVariables.get('studentId')\", () => pm.expect(String(result.data.id) === pm.collectionVariables.get('studentId')).to.be.true);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/students/user/{{studentUserId}}",
+            "description": "GET /api/students/user/{{studentUserId}}. Run the collection in order so earlier requests provide the required IDs and tokens."
+          }
+        },
+        {
+          "name": "05 Get by number",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const result = pm.response.json();",
+                  "pm.test(\"String(result.data.id) === pm.collectionVariables.get('studentId')\", () => pm.expect(String(result.data.id) === pm.collectionVariables.get('studentId')).to.be.true);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/students/number/N{{runId}}",
+            "description": "GET /api/students/number/N{{runId}}. Run the collection in order so earlier requests provide the required IDs and tokens."
+          }
+        },
+        {
+          "name": "06 Get by school",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const result = pm.response.json();",
+                  "pm.test(\"result.data.some(x => String(x.id) === pm.collectionVariables.get('studentId'))\", () => pm.expect(result.data.some(x => String(x.id) === pm.collectionVariables.get('studentId'))).to.be.true);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/students/school/{{schoolId}}",
+            "description": "GET /api/students/school/{{schoolId}}. Run the collection in order so earlier requests provide the required IDs and tokens."
+          }
+        },
+        {
+          "name": "07 Get disabilities",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const result = pm.response.json();",
+                  "pm.test(\"result.data.some(x => String(x.id) === pm.collectionVariables.get('studentId'))\", () => pm.expect(result.data.some(x => String(x.id) === pm.collectionVariables.get('studentId'))).to.be.true);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/students/disabilities",
+            "description": "GET /api/students/disabilities. Run the collection in order so earlier requests provide the required IDs and tokens."
+          }
+        },
+        {
+          "name": "08 School statistics",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const result = pm.response.json();",
+                  "pm.test(\"result.data.totalStudents >= 1\", () => pm.expect(result.data.totalStudents >= 1).to.be.true);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/students/statistics/{{schoolId}}",
+            "description": "GET /api/students/statistics/{{schoolId}}. Run the collection in order so earlier requests provide the required IDs and tokens."
+          }
+        },
+        {
+          "name": "09 Update student",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const result = pm.response.json();",
+                  "pm.test(\"result.data.accommodationsNeeded === 'Large print'\", () => pm.expect(result.data.accommodationsNeeded === 'Large print').to.be.true);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/students/{{studentId}}",
+            "description": "PUT /api/students/{{studentId}}. Run the collection in order so earlier requests provide the required IDs and tokens.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accommodationsNeeded\": \"Large print\",\n  \"gpa\": 3.7\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             }
           }
         }
@@ -259,127 +759,955 @@
     },
     {
       "name": "Scholarships",
+      "description": "Apply, edit, query, approve, disburse, reject and cancel applications with role-specific tokens.",
       "item": [
         {
-          "name": "Create Scholarship Application",
+          "name": "01 Apply",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const result = pm.response.json();",
+                  "pm.test(\"result.status === 'PENDING'\", () => pm.expect(result.status === 'PENDING').to.be.true);",
+                  "pm.collectionVariables.set('scholarshipId', String(result.id));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
               {
-                "key": "Content-Type",
-                "value": "application/json"
+                "key": "Authorization",
+                "value": "Bearer {{studentToken}}"
               },
               {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
+                "key": "Content-Type",
+                "value": "application/json"
               }
             ],
+            "url": "{{baseUrl}}/api/scholarships",
+            "description": "POST /api/scholarships. Run the collection in order so earlier requests provide the required IDs and tokens.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"scholarshipName\": \"Merit Scholarship 2024\",\n  \"studentId\": {{studentId}},\n  \"amountRequested\": 5000.00,\n  \"purpose\": \"Tuition and books\",\n  \"justification\": \"High academic performance and financial need\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/scholarships",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "scholarships"]
-            }
-          }
-        },
-        {
-          "name": "Get Pending Scholarships",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/scholarships?status=PENDING",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "scholarships"],
-              "query": [
-                {
-                  "key": "status",
-                  "value": "PENDING"
+              "raw": "{\n  \"scholarshipName\": \"Access Fund\",\n  \"studentId\": \"{{studentId}}\",\n  \"amountRequested\": 1000,\n  \"purpose\": \"Assistive equipment\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
                 }
-              ]
+              }
             }
           }
         },
         {
-          "name": "Approve Scholarship",
+          "name": "02 Update pending",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const result = pm.response.json();",
+                  "pm.test(\"result.amountRequested === 1200\", () => pm.expect(result.amountRequested === 1200).to.be.true);"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "PUT",
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/scholarships/1/approve?approvedAmount=4500.00&comments=Approved",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "scholarships", "1", "approve"],
-              "query": [
-                {
-                  "key": "approvedAmount",
-                  "value": "4500.00"
-                },
-                {
-                  "key": "comments",
-                  "value": "Approved"
-                }
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Accessibility",
-      "item": [
-        {
-          "name": "Create Accessibility Report",
-          "request": {
-            "method": "POST",
-            "header": [
+                "value": "Bearer {{studentToken}}"
+              },
               {
                 "key": "Content-Type",
                 "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
               }
             ],
+            "url": "{{baseUrl}}/api/scholarships/{{scholarshipId}}",
+            "description": "PUT /api/scholarships/{{scholarshipId}}. Run the collection in order so earlier requests provide the required IDs and tokens.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"studentId\": {{studentId}},\n  \"schoolId\": {{schoolId}},\n  \"title\": \"Wheelchair Accessibility Issue\",\n  \"description\": \"Ramp is too steep at main entrance\",\n  \"relatedDisability\": \"PHYSICAL\",\n  \"severity\": \"HIGH\",\n  \"location\": \"Main Building Entrance\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/accessibility/reports",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "accessibility", "reports"]
+              "raw": "{\n  \"scholarshipName\": \"Access Fund\",\n  \"studentId\": \"{{studentId}}\",\n  \"amountRequested\": 1200,\n  \"purpose\": \"Assistive equipment\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             }
           }
         },
         {
-          "name": "Get Unresolved Reports",
+          "name": "03 List paged",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const result = pm.response.json();",
+                  "pm.test(\"Array.isArray(result.content)\", () => pm.expect(Array.isArray(result.content)).to.be.true);"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "header": [
               {
                 "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
+                "value": "Bearer {{adminToken}}"
               }
             ],
-            "url": {
-              "raw": "{{baseUrl}}/api/accessibility/reports/unresolved",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "accessibility", "reports", "unresolved"]
+            "url": "{{baseUrl}}/api/scholarships?page=0&size=20",
+            "description": "GET /api/scholarships?page=0&size=20. Run the collection in order so earlier requests provide the required IDs and tokens."
+          }
+        },
+        {
+          "name": "04 Get by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const result = pm.response.json();",
+                  "pm.test(\"String(result.id) === pm.collectionVariables.get('scholarshipId')\", () => pm.expect(String(result.id) === pm.collectionVariables.get('scholarshipId')).to.be.true);"
+                ]
+              }
             }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/scholarships/{{scholarshipId}}",
+            "description": "GET /api/scholarships/{{scholarshipId}}. Run the collection in order so earlier requests provide the required IDs and tokens."
+          }
+        },
+        {
+          "name": "05 Get by student",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const result = pm.response.json();",
+                  "pm.test(\"result.some(x => String(x.id) === pm.collectionVariables.get('scholarshipId'))\", () => pm.expect(result.some(x => String(x.id) === pm.collectionVariables.get('scholarshipId'))).to.be.true);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/scholarships/student/{{studentId}}",
+            "description": "GET /api/scholarships/student/{{studentId}}. Run the collection in order so earlier requests provide the required IDs and tokens."
+          }
+        },
+        {
+          "name": "06 Get by status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const result = pm.response.json();",
+                  "pm.test(\"result.some(x => String(x.id) === pm.collectionVariables.get('scholarshipId'))\", () => pm.expect(result.some(x => String(x.id) === pm.collectionVariables.get('scholarshipId'))).to.be.true);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/scholarships/status/PENDING",
+            "description": "GET /api/scholarships/status/PENDING. Run the collection in order so earlier requests provide the required IDs and tokens."
+          }
+        },
+        {
+          "name": "07 Get by status paged",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const result = pm.response.json();",
+                  "pm.test(\"Array.isArray(result.content)\", () => pm.expect(Array.isArray(result.content)).to.be.true);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/scholarships/status/PENDING/paged?page=0&size=20",
+            "description": "GET /api/scholarships/status/PENDING/paged?page=0&size=20. Run the collection in order so earlier requests provide the required IDs and tokens."
+          }
+        },
+        {
+          "name": "08 Statistics",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const result = pm.response.json();",
+                  "pm.test(\"result.totalApplications >= 1\", () => pm.expect(result.totalApplications >= 1).to.be.true);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/scholarships/stats",
+            "description": "GET /api/scholarships/stats. Run the collection in order so earlier requests provide the required IDs and tokens."
+          }
+        },
+        {
+          "name": "09 Average processing time",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/scholarships/avg-processing-time",
+            "description": "GET /api/scholarships/avg-processing-time. Run the collection in order so earlier requests provide the required IDs and tokens."
+          }
+        },
+        {
+          "name": "10 Approve",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const result = pm.response.json();",
+                  "pm.test(\"result.status === 'APPROVED'\", () => pm.expect(result.status === 'APPROVED').to.be.true);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/scholarships/{{scholarshipId}}/approve?approvedAmount=1000&comments=Approved",
+            "description": "PUT /api/scholarships/{{scholarshipId}}/approve?approvedAmount=1000&comments=Approved. Run the collection in order so earlier requests provide the required IDs and tokens."
+          }
+        },
+        {
+          "name": "11 Disburse",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const result = pm.response.json();",
+                  "pm.test(\"result.status === 'DISBURSED'\", () => pm.expect(result.status === 'DISBURSED').to.be.true);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/scholarships/{{scholarshipId}}/disburse?reference=POSTMAN-{{runId}}",
+            "description": "PUT /api/scholarships/{{scholarshipId}}/disburse?reference=POSTMAN-{{runId}}. Run the collection in order so earlier requests provide the required IDs and tokens."
+          }
+        },
+        {
+          "name": "12 Apply for reject",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const result = pm.response.json();",
+                  "pm.test(\"result.status === 'PENDING'\", () => pm.expect(result.status === 'PENDING').to.be.true);",
+                  "pm.collectionVariables.set('rejectId', String(result.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{studentToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/scholarships",
+            "description": "POST /api/scholarships. Run the collection in order so earlier requests provide the required IDs and tokens.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"scholarshipName\": \"Reject Fund\",\n  \"studentId\": \"{{studentId}}\",\n  \"amountRequested\": 1000,\n  \"purpose\": \"Assistive equipment\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "13 Reject",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const result = pm.response.json();",
+                  "pm.test(\"result.status === 'REJECTED'\", () => pm.expect(result.status === 'REJECTED').to.be.true);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/scholarships/{{rejectId}}/reject?comments=Not%20eligible",
+            "description": "PUT /api/scholarships/{{rejectId}}/reject?comments=Not%20eligible. Run the collection in order so earlier requests provide the required IDs and tokens."
+          }
+        },
+        {
+          "name": "14 Apply for cancel",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const result = pm.response.json();",
+                  "pm.test(\"result.status === 'PENDING'\", () => pm.expect(result.status === 'PENDING').to.be.true);",
+                  "pm.collectionVariables.set('cancelId', String(result.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{studentToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/scholarships",
+            "description": "POST /api/scholarships. Run the collection in order so earlier requests provide the required IDs and tokens.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"scholarshipName\": \"Cancel Fund\",\n  \"studentId\": \"{{studentId}}\",\n  \"amountRequested\": 1000,\n  \"purpose\": \"Assistive equipment\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "15 Cancel",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{studentToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/scholarships/{{cancelId}}/cancel",
+            "description": "DELETE /api/scholarships/{{cancelId}}/cancel. Run the collection in order so earlier requests provide the required IDs and tokens."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Accessibility Reports",
+      "description": "Create, list, retrieve, update and delete an accessibility report.",
+      "item": [
+        {
+          "name": "01 Create report",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const result = pm.response.json();",
+                  "pm.test(\"!!result.id\", () => pm.expect(!!result.id).to.be.true);",
+                  "pm.collectionVariables.set('reportId', String(result.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/accessibility",
+            "description": "POST /api/accessibility. Run the collection in order so earlier requests provide the required IDs and tokens.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentId\": \"{{studentId}}\",\n  \"schoolId\": \"{{schoolId}}\",\n  \"title\": \"Ramp review\",\n  \"description\": \"Review entrance access\",\n  \"relatedDisability\": \"VISUAL\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "02 List paged",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const result = pm.response.json();",
+                  "pm.test(\"Array.isArray(result.content)\", () => pm.expect(Array.isArray(result.content)).to.be.true);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/accessibility?page=0&size=20",
+            "description": "GET /api/accessibility?page=0&size=20. Run the collection in order so earlier requests provide the required IDs and tokens."
+          }
+        },
+        {
+          "name": "03 Get report",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const result = pm.response.json();",
+                  "pm.test(\"String(result.id) === pm.collectionVariables.get('reportId')\", () => pm.expect(String(result.id) === pm.collectionVariables.get('reportId')).to.be.true);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/accessibility/{{reportId}}",
+            "description": "GET /api/accessibility/{{reportId}}. Run the collection in order so earlier requests provide the required IDs and tokens."
+          }
+        },
+        {
+          "name": "04 Update report",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const result = pm.response.json();",
+                  "pm.test(\"result.title === 'Updated ramp review'\", () => pm.expect(result.title === 'Updated ramp review').to.be.true);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/accessibility/{{reportId}}",
+            "description": "PUT /api/accessibility/{{reportId}}. Run the collection in order so earlier requests provide the required IDs and tokens.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentId\": \"{{studentId}}\",\n  \"schoolId\": \"{{schoolId}}\",\n  \"title\": \"Updated ramp review\",\n  \"description\": \"Review entrance access\",\n  \"relatedDisability\": \"VISUAL\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "05 Delete report",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/accessibility/{{reportId}}",
+            "description": "DELETE /api/accessibility/{{reportId}}. Run the collection in order so earlier requests provide the required IDs and tokens."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "description": "Requires a seeded demo-admin notification. Demonstrates inbox, unread count, ownership checks, mark read and delete.",
+      "item": [
+        {
+          "name": "01 List notifications",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const result = pm.response.json();",
+                  "pm.test(\"Array.isArray(result)\", () => pm.expect(Array.isArray(result)).to.be.true);",
+                  "pm.test(\"result.length >= 1\", () => pm.expect(result.length >= 1).to.be.true);",
+                  "pm.collectionVariables.set('notificationId', String(result[0].id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/notifications",
+            "description": "GET /api/notifications. Run the collection in order so earlier requests provide the required IDs and tokens."
+          }
+        },
+        {
+          "name": "02 List unread",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const result = pm.response.json();",
+                  "pm.test(\"Array.isArray(result)\", () => pm.expect(Array.isArray(result)).to.be.true);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/notifications/unread",
+            "description": "GET /api/notifications/unread. Run the collection in order so earlier requests provide the required IDs and tokens."
+          }
+        },
+        {
+          "name": "03 Count unread",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const result = pm.response.json();",
+                  "pm.test(\"typeof result === 'number'\", () => pm.expect(typeof result === 'number').to.be.true);",
+                  "pm.test(\"result >= 1\", () => pm.expect(result >= 1).to.be.true);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/notifications/unread/count",
+            "description": "GET /api/notifications/unread/count. Run the collection in order so earlier requests provide the required IDs and tokens."
+          }
+        },
+        {
+          "name": "04 Student cannot read admin notification",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{studentToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/notifications/{{notificationId}}/read",
+            "description": "PUT /api/notifications/{{notificationId}}/read. Run the collection in order so earlier requests provide the required IDs and tokens."
+          }
+        },
+        {
+          "name": "05 Student cannot delete admin notification",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{studentToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/notifications/{{notificationId}}",
+            "description": "DELETE /api/notifications/{{notificationId}}. Run the collection in order so earlier requests provide the required IDs and tokens."
+          }
+        },
+        {
+          "name": "06 Mark one read",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/notifications/{{notificationId}}/read",
+            "description": "PUT /api/notifications/{{notificationId}}/read. Run the collection in order so earlier requests provide the required IDs and tokens."
+          }
+        },
+        {
+          "name": "07 Mark all read",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/notifications/mark-all-read",
+            "description": "PUT /api/notifications/mark-all-read. Run the collection in order so earlier requests provide the required IDs and tokens."
+          }
+        },
+        {
+          "name": "08 Verify unread count is zero",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const result = pm.response.json();",
+                  "pm.test(\"result === 0\", () => pm.expect(result === 0).to.be.true);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/notifications/unread/count",
+            "description": "GET /api/notifications/unread/count. Run the collection in order so earlier requests provide the required IDs and tokens."
+          }
+        },
+        {
+          "name": "09 Delete notification",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/notifications/{{notificationId}}",
+            "description": "DELETE /api/notifications/{{notificationId}}. Run the collection in order so earlier requests provide the required IDs and tokens."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Demo cleanup",
+      "description": "Run last: delete the student profile, deactivate the school and log out.",
+      "item": [
+        {
+          "name": "01 Delete student",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const result = pm.response.json();",
+                  "pm.test(\"result.success === true\", () => pm.expect(result.success === true).to.be.true);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/students/{{studentId}}",
+            "description": "DELETE /api/students/{{studentId}}. Run the collection in order so earlier requests provide the required IDs and tokens."
+          }
+        },
+        {
+          "name": "02 Delete school",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const result = pm.response.json();",
+                  "pm.test(\"result.success === true\", () => pm.expect(result.success === true).to.be.true);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/schools/{{schoolId}}",
+            "description": "DELETE /api/schools/{{schoolId}}. Run the collection in order so earlier requests provide the required IDs and tokens."
+          }
+        },
+        {
+          "name": "03 Logout student",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{studentToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/logout",
+            "description": "POST /api/auth/logout. Run the collection in order so earlier requests provide the required IDs and tokens."
           }
         }
       ]

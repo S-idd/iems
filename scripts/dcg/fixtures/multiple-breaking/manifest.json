@@ -1,0 +1,21 @@
+{
+  "description": "Two independent incompatible type changes; real CLI must reject both.",
+  "contracts": {
+    "iems.enrollment": {
+      "field": "studentId",
+      "from": "integer",
+      "to": "string",
+      "file": "enrollment.json",
+      "baseline_sha256": "3e4f09bad967f4d6d58cf04b4a9de2f9cde71778029c2e14cf2de4ce35821e73",
+      "fixture_sha256": "7eeffa785d9643b1388d3c97bd752f6d3d9b6696eb5a689b98efa6d2be6ff72f"
+    },
+    "iems.scholarship": {
+      "field": "amount",
+      "from": "number",
+      "to": "string",
+      "file": "scholarship.json",
+      "baseline_sha256": "aa60e61e5bc2a760c5a1a8699a01c493d4d0b2ac30aa1a424f4ca1cff56ccc43",
+      "fixture_sha256": "7f5049ae6cceb0ca03391baa1752de23ac35b7fda8db44bc023e645366004d1e"
+    }
+  }
+}

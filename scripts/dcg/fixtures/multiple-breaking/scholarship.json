@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "scholarshipId": {
+      "type": "integer"
+    },
+    "studentId": {
+      "type": "integer"
+    },
+    "studentName": {
+      "type": "string"
+    },
+    "eventType": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "PENDING",
+        "UNDER_REVIEW",
+        "APPROVED",
+        "REJECTED",
+        "DISBURSED",
+        "CANCELLED"
+      ]
+    },
+    "amount": {
+      "type": "string"
+    },
+    "timestamp": {
+      "type": "string"
+    }
+  },
+  "required": []
+}

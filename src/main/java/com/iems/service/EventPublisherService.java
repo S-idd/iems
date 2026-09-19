@@ -21,6 +21,9 @@ public class EventPublisherService {
     
     private static final Logger logger = LoggerFactory.getLogger(EventPublisherService.class);
 
+    @org.springframework.beans.factory.annotation.Value("${app.messaging.enabled:true}")
+    private boolean messagingEnabled;
+
     @Autowired
     private KafkaTemplate<String, Object> kafkaTemplate;
 
@@ -28,6 +31,7 @@ public class EventPublisherService {
      * Publish accessibility event to Kafka.
      */
     public void publishAccessibilityEvent(AccessibilityEvent event) {
+        if (!messagingEnabled) return;
         logger.info("Publishing accessibility event: {} for school: {}", 
                     event.getEventType(), event.getSchoolId());
         
@@ -51,6 +55,7 @@ public class EventPublisherService {
      * Publish scholarship event to Kafka.
      */
     public void publishScholarshipEvent(ScholarshipEvent event) {
+        if (!messagingEnabled) return;
         logger.info("Publishing scholarship event: {} for scholarship: {}", 
                     event.getEventType(), event.getScholarshipId());
         
@@ -74,6 +79,7 @@ public class EventPublisherService {
      * Publish enrollment event to Kafka.
      */
     public void publishEnrollmentEvent(EnrollmentEvent event) {
+        if (!messagingEnabled) return;
         logger.info("Publishing enrollment event: {} for enrollment: {}", 
                     event.getEventType(), event.getEnrollmentId());
         
@@ -97,6 +103,7 @@ public class EventPublisherService {
      * Publish notification event to Kafka.
      */
     public void publishNotificationEvent(String userId, String title, String message) {
+        if (!messagingEnabled) return;
         logger.info("Publishing notification event for user: {}", userId);
         
         var notificationData = new java.util.HashMap<String, Object>();

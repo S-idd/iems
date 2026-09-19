@@ -1,0 +1,3157 @@
+{
+  "info": {
+    "name": "IEMS DCG Governance Service Demo",
+    "description": "Separate DCG registry/check/dashboard demo. Run setup only against a fresh, isolated service with contracts.validation.strict-mode=false. Run verification against a populated service before and after restart. No reset request is included.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "basic",
+    "basic": [
+      {
+        "key": "username",
+        "value": "{{dcg_username}}",
+        "type": "string"
+      },
+      {
+        "key": "password",
+        "value": "{{dcg_password}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "schema_accessibility_v1",
+      "value": "{\"$schema\":\"https://json-schema.org/draft/2020-12/schema\",\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"integer\"},\"schoolId\":{\"type\":\"integer\"},\"schoolName\":{\"type\":\"string\"},\"studentId\":{\"type\":\"integer\"},\"studentName\":{\"type\":\"string\"},\"eventType\":{\"type\":\"string\"},\"disabilityType\":{\"type\":\"string\",\"enum\":[\"VISUAL\",\"HEARING\",\"PHYSICAL\",\"COGNITIVE\",\"SPEECH\",\"MENTAL_HEALTH\",\"AUTISM\",\"MULTIPLE\",\"OTHER\"]},\"severity\":{\"type\":\"string\"},\"timestamp\":{\"type\":\"string\"}},\"required\":[]}"
+    },
+    {
+      "key": "schema_enrollment_v1",
+      "value": "{\"$schema\":\"https://json-schema.org/draft/2020-12/schema\",\"type\":\"object\",\"properties\":{\"enrollmentId\":{\"type\":\"integer\"},\"studentId\":{\"type\":\"integer\"},\"studentName\":{\"type\":\"string\"},\"courseId\":{\"type\":\"integer\"},\"courseCode\":{\"type\":\"string\"},\"courseName\":{\"type\":\"string\"},\"eventType\":{\"type\":\"string\"},\"timestamp\":{\"type\":\"string\"}},\"required\":[]}"
+    },
+    {
+      "key": "schema_notification_v1",
+      "value": "{\"$schema\":\"https://json-schema.org/draft/2020-12/schema\",\"type\":\"object\",\"properties\":{\"userId\":{\"type\":\"string\"},\"title\":{\"type\":\"string\"},\"message\":{\"type\":\"string\"},\"timestamp\":{\"type\":\"string\"}},\"required\":[]}"
+    },
+    {
+      "key": "schema_scholarship_v1",
+      "value": "{\"$schema\":\"https://json-schema.org/draft/2020-12/schema\",\"type\":\"object\",\"properties\":{\"scholarshipId\":{\"type\":\"integer\"},\"studentId\":{\"type\":\"integer\"},\"studentName\":{\"type\":\"string\"},\"eventType\":{\"type\":\"string\"},\"status\":{\"type\":\"string\",\"enum\":[\"PENDING\",\"UNDER_REVIEW\",\"APPROVED\",\"REJECTED\",\"DISBURSED\",\"CANCELLED\"]},\"amount\":{\"type\":\"number\"},\"timestamp\":{\"type\":\"string\"}},\"required\":[]}"
+    },
+    {
+      "key": "schema_scholarship_v2",
+      "value": "{\"$schema\":\"https://json-schema.org/draft/2020-12/schema\",\"type\":\"object\",\"properties\":{\"scholarshipId\":{\"type\":\"integer\"},\"studentId\":{\"type\":\"integer\"},\"studentName\":{\"type\":\"string\"},\"eventType\":{\"type\":\"string\"},\"status\":{\"type\":\"string\",\"enum\":[\"PENDING\",\"UNDER_REVIEW\",\"APPROVED\",\"REJECTED\",\"DISBURSED\",\"CANCELLED\"]},\"amount\":{\"type\":\"number\"},\"timestamp\":{\"type\":\"string\"},\"sourceSystem\":{\"type\":\"string\"}},\"required\":[]}"
+    },
+    {
+      "key": "schema_enrollment_v2",
+      "value": "{\"$schema\":\"https://json-schema.org/draft/2020-12/schema\",\"type\":\"object\",\"properties\":{\"enrollmentId\":{\"type\":\"integer\"},\"studentId\":{\"type\":\"string\"},\"studentName\":{\"type\":\"string\"},\"courseId\":{\"type\":\"integer\"},\"courseCode\":{\"type\":\"string\"},\"courseName\":{\"type\":\"string\"},\"eventType\":{\"type\":\"string\"},\"timestamp\":{\"type\":\"string\"}},\"required\":[]}"
+    },
+    {
+      "key": "compatible_run_id",
+      "value": ""
+    },
+    {
+      "key": "breaking_run_id",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Register and check (fresh isolated service only)",
+      "item": [
+        {
+          "name": "Health and readiness",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/actuator/health",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verify Basic authentication",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/contracts",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "contracts"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Register iems.accessibility",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/contracts",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "contracts"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"contractId\":\"iems.accessibility\",\"ownerTeam\":\"iems\",\"domain\":\"education\",\"compatibilityMode\":\"BACKWARD\",\"initialVersion\":\"v1\",\"schema\":{{schema_accessibility_v1}}}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "const j=pm.response.json();",
+                  "pm.test(\"registered iems.accessibility with v1\", () => { pm.expect(j.contractId).to.eql(\"iems.accessibility\"); pm.expect(j.versions).to.include(\"v1\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Register iems.enrollment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/contracts",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "contracts"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"contractId\":\"iems.enrollment\",\"ownerTeam\":\"iems\",\"domain\":\"education\",\"compatibilityMode\":\"BACKWARD\",\"initialVersion\":\"v1\",\"schema\":{{schema_enrollment_v1}}}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "const j=pm.response.json();",
+                  "pm.test(\"registered iems.enrollment with v1\", () => { pm.expect(j.contractId).to.eql(\"iems.enrollment\"); pm.expect(j.versions).to.include(\"v1\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Register iems.notification",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/contracts",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "contracts"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"contractId\":\"iems.notification\",\"ownerTeam\":\"iems\",\"domain\":\"education\",\"compatibilityMode\":\"BACKWARD\",\"initialVersion\":\"v1\",\"schema\":{{schema_notification_v1}}}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "const j=pm.response.json();",
+                  "pm.test(\"registered iems.notification with v1\", () => { pm.expect(j.contractId).to.eql(\"iems.notification\"); pm.expect(j.versions).to.include(\"v1\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Register iems.scholarship",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/contracts",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "contracts"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"contractId\":\"iems.scholarship\",\"ownerTeam\":\"iems\",\"domain\":\"education\",\"compatibilityMode\":\"BACKWARD\",\"initialVersion\":\"v1\",\"schema\":{{schema_scholarship_v1}}}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "const j=pm.response.json();",
+                  "pm.test(\"registered iems.scholarship with v1\", () => { pm.expect(j.contractId).to.eql(\"iems.scholarship\"); pm.expect(j.versions).to.include(\"v1\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List all four contracts",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/contracts",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "contracts"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const ids=pm.response.json().map(x=>x.contractId);",
+                  "pm.test(\"four IEMS contracts\", () => pm.expect(ids.sort()).to.eql([\"iems.accessibility\",\"iems.enrollment\",\"iems.notification\",\"iems.scholarship\"]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Retrieve accessibility v1",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/contracts/iems.accessibility/versions/v1",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "contracts",
+                "iems.accessibility",
+                "versions",
+                "v1"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"published schema\", () => pm.expect(pm.response.json().schema).to.be.an(\"object\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Retrieve enrollment v1",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/contracts/iems.enrollment/versions/v1",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "contracts",
+                "iems.enrollment",
+                "versions",
+                "v1"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"published schema\", () => pm.expect(pm.response.json().schema).to.be.an(\"object\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Retrieve notification v1",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/contracts/iems.notification/versions/v1",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "contracts",
+                "iems.notification",
+                "versions",
+                "v1"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"published schema\", () => pm.expect(pm.response.json().schema).to.be.an(\"object\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Retrieve scholarship v1",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/contracts/iems.scholarship/versions/v1",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "contracts",
+                "iems.scholarship",
+                "versions",
+                "v1"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"published schema\", () => pm.expect(pm.response.json().schema).to.be.an(\"object\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Publish compatible scholarship v2",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/contracts/iems.scholarship/versions",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "contracts",
+                "iems.scholarship",
+                "versions"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"version\":\"v2\",\"schema\":{{schema_scholarship_v2}}}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"v2 published\", () => pm.expect(pm.response.json().version).to.eql(\"v2\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Retrieve scholarship v2",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/contracts/iems.scholarship/versions/v2",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "contracts",
+                "iems.scholarship",
+                "versions",
+                "v2"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Publish breaking enrollment v2 proposal",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/contracts/iems.enrollment/versions",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "contracts",
+                "iems.enrollment",
+                "versions"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"version\":\"v2\",\"schema\":{{schema_enrollment_v2}}}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"v2 published\", () => pm.expect(pm.response.json().version).to.eql(\"v2\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Retrieve enrollment v2",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/contracts/iems.enrollment/versions/v2",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "contracts",
+                "iems.enrollment",
+                "versions",
+                "v2"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Submit compatible check",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"contractId\":\"iems.scholarship\",\"baseVersion\":\"v1\",\"candidateVersion\":\"v2\",\"mode\":\"BACKWARD\",\"commitSha\":\"postman-demo\",\"triggeredBy\":\"postman-demo\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 202\", () => pm.response.to.have.status(202));",
+                  "const j=pm.response.json();",
+                  "pm.test(\"asynchronous acceptance\", () => { pm.expect(j.status).to.eql(\"QUEUED\"); pm.expect(j.runId).to.be.a(\"string\").and.not.empty; });",
+                  "pm.environment.set(\"compatible_run_id\", j.runId); pm.environment.set(\"compatible_poll_count\", 0);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Poll compatible check",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks/{{compatible_run_id}}",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks",
+                "{{compatible_run_id}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const j=pm.response.json();",
+                  "pm.test(\"same run ID\", () => pm.expect(j.runId).to.eql(pm.environment.get(\"compatible_run_id\")));",
+                  "if (j.status === \"QUEUED\" || j.status === \"RUNNING\") { const n=Number(pm.environment.get(\"compatible_poll_count\") || 0)+1; pm.environment.set(\"compatible_poll_count\", n); pm.test(\"poll bounded to 30\", () => pm.expect(n).to.be.below(31)); if(n<31) pm.execution.setNextRequest(pm.info.requestName); } else { pm.test(\"terminal PASS\", () => pm.expect(j.status).to.eql(\"PASS\")); pm.environment.set(\"compatible_status\", j.status); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Retrieve compatible result",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks/{{compatible_run_id}}",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks",
+                "{{compatible_run_id}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const j=pm.response.json();",
+                  "pm.test(\"PASS persisted\", () => { pm.expect(j.runId).to.eql(pm.environment.get(\"compatible_run_id\")); pm.expect(j.status).to.eql(\"PASS\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Retrieve compatible logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks/{{compatible_run_id}}/logs",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks",
+                "{{compatible_run_id}}",
+                "logs"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const j=pm.response.json();",
+                  "pm.test(\"logs match compatible run\", () => { pm.expect(j.length).to.be.above(0); j.forEach(x => pm.expect(x.runId).to.eql(pm.environment.get(\"compatible_run_id\"))); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Submit breaking check",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"contractId\":\"iems.enrollment\",\"baseVersion\":\"v1\",\"candidateVersion\":\"v2\",\"mode\":\"BACKWARD\",\"commitSha\":\"postman-demo\",\"triggeredBy\":\"postman-demo\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 202\", () => pm.response.to.have.status(202));",
+                  "const j=pm.response.json();",
+                  "pm.test(\"asynchronous acceptance\", () => { pm.expect(j.status).to.eql(\"QUEUED\"); pm.expect(j.runId).to.be.a(\"string\").and.not.empty; });",
+                  "pm.environment.set(\"breaking_run_id\", j.runId); pm.environment.set(\"breaking_poll_count\", 0);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Poll breaking check",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks/{{breaking_run_id}}",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks",
+                "{{breaking_run_id}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const j=pm.response.json();",
+                  "pm.test(\"same run ID\", () => pm.expect(j.runId).to.eql(pm.environment.get(\"breaking_run_id\")));",
+                  "if (j.status === \"QUEUED\" || j.status === \"RUNNING\") { const n=Number(pm.environment.get(\"breaking_poll_count\") || 0)+1; pm.environment.set(\"breaking_poll_count\", n); pm.test(\"poll bounded to 30\", () => pm.expect(n).to.be.below(31)); if(n<31) pm.execution.setNextRequest(pm.info.requestName); } else { pm.test(\"terminal FAIL\", () => pm.expect(j.status).to.eql(\"FAIL\")); pm.environment.set(\"breaking_status\", j.status); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Retrieve breaking result",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks/{{breaking_run_id}}",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks",
+                "{{breaking_run_id}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const j=pm.response.json();",
+                  "pm.test(\"FAIL persisted\", () => { pm.expect(j.runId).to.eql(pm.environment.get(\"breaking_run_id\")); pm.expect(j.status).to.eql(\"FAIL\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Retrieve breaking logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks/{{breaking_run_id}}/logs",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks",
+                "{{breaking_run_id}}",
+                "logs"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const j=pm.response.json();",
+                  "pm.test(\"logs match breaking run\", () => { pm.expect(j.length).to.be.above(0); j.forEach(x => pm.expect(x.runId).to.eql(pm.environment.get(\"breaking_run_id\"))); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Verify existing rehearsal",
+      "item": [
+        {
+          "name": "Health and readiness",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/actuator/health",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verify Basic authentication and registry",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/contracts",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "contracts"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const ids=pm.response.json().map(x=>x.contractId);",
+                  "pm.test(\"all contracts persisted\", () => pm.expect(ids.sort()).to.eql([\"iems.accessibility\",\"iems.enrollment\",\"iems.notification\",\"iems.scholarship\"]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verify accessibility versions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/contracts/iems.accessibility/versions",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "contracts",
+                "iems.accessibility",
+                "versions"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const versions=pm.response.json();",
+                  "pm.test(\"accessibility v1 persists\", () => pm.expect(versions).to.include(\"v1\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verify enrollment versions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/contracts/iems.enrollment/versions",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "contracts",
+                "iems.enrollment",
+                "versions"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const versions=pm.response.json();",
+                  "pm.test(\"enrollment v1 persists\", () => pm.expect(versions).to.include(\"v1\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verify notification versions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/contracts/iems.notification/versions",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "contracts",
+                "iems.notification",
+                "versions"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const versions=pm.response.json();",
+                  "pm.test(\"notification v1 persists\", () => pm.expect(versions).to.include(\"v1\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verify scholarship versions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/contracts/iems.scholarship/versions",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "contracts",
+                "iems.scholarship",
+                "versions"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const versions=pm.response.json();",
+                  "pm.test(\"scholarship v1 persists\", () => pm.expect(versions).to.include(\"v1\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Retrieve compatible result",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks/{{compatible_run_id}}",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks",
+                "{{compatible_run_id}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const j=pm.response.json();",
+                  "pm.test(\"PASS persisted\", () => { pm.expect(j.runId).to.eql(pm.environment.get(\"compatible_run_id\")); pm.expect(j.status).to.eql(\"PASS\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Retrieve compatible logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks/{{compatible_run_id}}/logs",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks",
+                "{{compatible_run_id}}",
+                "logs"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const j=pm.response.json();",
+                  "pm.test(\"logs match compatible run\", () => { pm.expect(j.length).to.be.above(0); j.forEach(x => pm.expect(x.runId).to.eql(pm.environment.get(\"compatible_run_id\"))); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Retrieve breaking result",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks/{{breaking_run_id}}",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks",
+                "{{breaking_run_id}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const j=pm.response.json();",
+                  "pm.test(\"FAIL persisted\", () => { pm.expect(j.runId).to.eql(pm.environment.get(\"breaking_run_id\")); pm.expect(j.status).to.eql(\"FAIL\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Retrieve breaking logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks/{{breaking_run_id}}/logs",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks",
+                "{{breaking_run_id}}",
+                "logs"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const j=pm.response.json();",
+                  "pm.test(\"logs match breaking run\", () => { pm.expect(j.length).to.be.above(0); j.forEach(x => pm.expect(x.runId).to.eql(pm.environment.get(\"breaking_run_id\"))); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Dashboard contracts",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/ui/contracts",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "ui",
+                "contracts"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"real HTML lists enrollment\", () => pm.expect(pm.response.text()).to.include(\"iems.enrollment\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Dashboard PASS run",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/ui/checks/{{compatible_run_id}}",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "ui",
+                "checks",
+                "{{compatible_run_id}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"PASS and run ID visible\", () => { pm.expect(pm.response.text()).to.include(pm.environment.get(\"compatible_run_id\")); pm.expect(pm.response.text()).to.include(\"PASS\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Dashboard FAIL run",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/ui/checks/{{breaking_run_id}}",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "ui",
+                "checks",
+                "{{breaking_run_id}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"FAIL and run ID visible\", () => { pm.expect(pm.response.text()).to.include(pm.environment.get(\"breaking_run_id\")); pm.expect(pm.response.text()).to.include(\"FAIL\"); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Phase 2.2 \u2014 real service AI advisory",
+      "description": "Run against isolated V13 history and IEMS v1/v2/v3 fixtures with the real Rust model. Poll endpoints after completion; run restart folder after restarting Java against the same history.",
+      "item": [
+        {
+          "name": "Submit compatible service check",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"contractId\":\"iems.enrollment\",\"baseVersion\":\"v1\",\"candidateVersion\":\"v2\",\"mode\":\"BACKWARD\",\"commitSha\":\"phase22-postman-compatible\",\"triggeredBy\":\"postman-phase22\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 202\", () => pm.response.to.have.status(202));",
+                  "const j=pm.response.json();",
+                  "pm.test(\"run queued\", () => { pm.expect(j.status).to.eql(\"QUEUED\"); pm.expect(j.runId).to.be.a(\"string\").and.not.empty; });",
+                  "pm.environment.set(\"phase22_compatible_run_id\",j.runId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Poll compatible deterministic result",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks/{{phase22_compatible_run_id}}",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks",
+                "{{phase22_compatible_run_id}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const j=pm.response.json();",
+                  "pm.test(\"PASS remains authoritative\", () => { pm.expect(j.runId).to.eql(pm.environment.get(\"phase22_compatible_run_id\")); pm.expect(j.status).to.eql(\"PASS\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Retrieve compatible advisory",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks/{{phase22_compatible_run_id}}/advisory",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks",
+                "{{phase22_compatible_run_id}}",
+                "advisory"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const j=pm.response.json();",
+                  "pm.test(\"linked advisory\", () => { pm.expect(j.runId).to.eql(pm.environment.get(\"phase22_compatible_run_id\")); pm.expect(j.advisoryOnly).to.eql(true); pm.expect(j.status).to.eql(\"AVAILABLE\"); pm.expect(j.testOnlyAdapter).to.eql(false); });",
+                  "pm.test(\"prediction and agreement\", () => { pm.expect(j.predictionLabel).to.eql(\"SAFE\"); pm.expect(j.agreement).to.eql(\"AGREES\"); pm.expect(j.probabilities[\"SAFE\"]).to.be.a(\"number\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Retrieve compatible logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks/{{phase22_compatible_run_id}}/logs",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks",
+                "{{phase22_compatible_run_id}}",
+                "logs"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const rows=pm.response.json();",
+                  "pm.test(\"separate advisory log\", () => { pm.expect(rows.some(x=>x.runId===pm.environment.get(\"phase22_compatible_run_id\") && x.message.includes(\"code=ai_advisory_completed\"))).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Submit breaking service check",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"contractId\":\"iems.enrollment\",\"baseVersion\":\"v1\",\"candidateVersion\":\"v3\",\"mode\":\"BACKWARD\",\"commitSha\":\"phase22-postman-breaking\",\"triggeredBy\":\"postman-phase22\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 202\", () => pm.response.to.have.status(202));",
+                  "const j=pm.response.json();",
+                  "pm.test(\"run queued\", () => { pm.expect(j.status).to.eql(\"QUEUED\"); pm.expect(j.runId).to.be.a(\"string\").and.not.empty; });",
+                  "pm.environment.set(\"phase22_breaking_run_id\",j.runId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Poll breaking deterministic result",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks/{{phase22_breaking_run_id}}",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks",
+                "{{phase22_breaking_run_id}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const j=pm.response.json();",
+                  "pm.test(\"FAIL remains authoritative\", () => { pm.expect(j.runId).to.eql(pm.environment.get(\"phase22_breaking_run_id\")); pm.expect(j.status).to.eql(\"FAIL\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Retrieve breaking advisory",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks/{{phase22_breaking_run_id}}/advisory",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks",
+                "{{phase22_breaking_run_id}}",
+                "advisory"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const j=pm.response.json();",
+                  "pm.test(\"linked advisory\", () => { pm.expect(j.runId).to.eql(pm.environment.get(\"phase22_breaking_run_id\")); pm.expect(j.advisoryOnly).to.eql(true); pm.expect(j.status).to.eql(\"AVAILABLE\"); pm.expect(j.testOnlyAdapter).to.eql(false); });",
+                  "pm.test(\"prediction and agreement\", () => { pm.expect(j.predictionLabel).to.eql(\"BREAKING\"); pm.expect(j.agreement).to.eql(\"AGREES\"); pm.expect(j.probabilities[\"BREAKING\"]).to.be.a(\"number\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Retrieve breaking logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks/{{phase22_breaking_run_id}}/logs",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks",
+                "{{phase22_breaking_run_id}}",
+                "logs"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const rows=pm.response.json();",
+                  "pm.test(\"separate advisory log\", () => { pm.expect(rows.some(x=>x.runId===pm.environment.get(\"phase22_breaking_run_id\") && x.message.includes(\"code=ai_advisory_completed\"))).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Phase 2.2 \u2014 verify after service restart",
+      "description": "Run after Java restarts against the same isolated SQLite file. Run IDs remain in Postman environment.",
+      "item": [
+        {
+          "name": "Poll compatible deterministic result",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks/{{phase22_compatible_run_id}}",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks",
+                "{{phase22_compatible_run_id}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const j=pm.response.json();",
+                  "pm.test(\"PASS remains authoritative\", () => { pm.expect(j.runId).to.eql(pm.environment.get(\"phase22_compatible_run_id\")); pm.expect(j.status).to.eql(\"PASS\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Retrieve compatible advisory",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks/{{phase22_compatible_run_id}}/advisory",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks",
+                "{{phase22_compatible_run_id}}",
+                "advisory"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const j=pm.response.json();",
+                  "pm.test(\"linked advisory\", () => { pm.expect(j.runId).to.eql(pm.environment.get(\"phase22_compatible_run_id\")); pm.expect(j.advisoryOnly).to.eql(true); pm.expect(j.status).to.eql(\"AVAILABLE\"); pm.expect(j.testOnlyAdapter).to.eql(false); });",
+                  "pm.test(\"prediction and agreement\", () => { pm.expect(j.predictionLabel).to.eql(\"SAFE\"); pm.expect(j.agreement).to.eql(\"AGREES\"); pm.expect(j.probabilities[\"SAFE\"]).to.be.a(\"number\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Poll breaking deterministic result",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks/{{phase22_breaking_run_id}}",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks",
+                "{{phase22_breaking_run_id}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const j=pm.response.json();",
+                  "pm.test(\"FAIL remains authoritative\", () => { pm.expect(j.runId).to.eql(pm.environment.get(\"phase22_breaking_run_id\")); pm.expect(j.status).to.eql(\"FAIL\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Retrieve breaking advisory",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks/{{phase22_breaking_run_id}}/advisory",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks",
+                "{{phase22_breaking_run_id}}",
+                "advisory"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const j=pm.response.json();",
+                  "pm.test(\"linked advisory\", () => { pm.expect(j.runId).to.eql(pm.environment.get(\"phase22_breaking_run_id\")); pm.expect(j.advisoryOnly).to.eql(true); pm.expect(j.status).to.eql(\"AVAILABLE\"); pm.expect(j.testOnlyAdapter).to.eql(false); });",
+                  "pm.test(\"prediction and agreement\", () => { pm.expect(j.predictionLabel).to.eql(\"BREAKING\"); pm.expect(j.agreement).to.eql(\"AGREES\"); pm.expect(j.probabilities[\"BREAKING\"]).to.be.a(\"number\"); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Phase 2.2 \u2014 isolated failure scenarios",
+      "description": "Run each four-request group only after configuring the specified unavailable endpoint or phase2-rehearsal test-only adapter. Use distinct commitSha values to avoid webhook deduplication. These are not real model predictions.",
+      "item": [
+        {
+          "name": "Submit unavailable-compatible service check",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"contractId\":\"iems.enrollment\",\"baseVersion\":\"v1\",\"candidateVersion\":\"v2\",\"mode\":\"BACKWARD\",\"commitSha\":\"phase22-postman-unavailable-compatible\",\"triggeredBy\":\"postman-phase22\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 202\", () => pm.response.to.have.status(202));",
+                  "const j=pm.response.json();",
+                  "pm.test(\"run queued\", () => { pm.expect(j.status).to.eql(\"QUEUED\"); pm.expect(j.runId).to.be.a(\"string\").and.not.empty; });",
+                  "pm.environment.set(\"phase22_unavailable-compatible_run_id\",j.runId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Poll unavailable-compatible deterministic result",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks/{{phase22_unavailable-compatible_run_id}}",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks",
+                "{{phase22_unavailable-compatible_run_id}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const j=pm.response.json();",
+                  "pm.test(\"PASS remains authoritative\", () => { pm.expect(j.runId).to.eql(pm.environment.get(\"phase22_unavailable-compatible_run_id\")); pm.expect(j.status).to.eql(\"PASS\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Retrieve unavailable-compatible advisory",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks/{{phase22_unavailable-compatible_run_id}}/advisory",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks",
+                "{{phase22_unavailable-compatible_run_id}}",
+                "advisory"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const j=pm.response.json();",
+                  "pm.test(\"linked advisory\", () => { pm.expect(j.runId).to.eql(pm.environment.get(\"phase22_unavailable-compatible_run_id\")); pm.expect(j.advisoryOnly).to.eql(true); pm.expect(j.status).to.eql(\"UNAVAILABLE\"); pm.expect(j.testOnlyAdapter).to.eql(false); });",
+                  "pm.test(\"no fabricated prediction\", () => { pm.expect(j.predictionLabel).to.eql(null); pm.expect(j.probabilities).to.eql(null); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Retrieve unavailable-compatible logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks/{{phase22_unavailable-compatible_run_id}}/logs",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks",
+                "{{phase22_unavailable-compatible_run_id}}",
+                "logs"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const rows=pm.response.json();",
+                  "pm.test(\"separate advisory log\", () => { pm.expect(rows.some(x=>x.runId===pm.environment.get(\"phase22_unavailable-compatible_run_id\") && x.message.includes(\"code=ai_advisory_completed\"))).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Submit unavailable-breaking service check",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"contractId\":\"iems.enrollment\",\"baseVersion\":\"v1\",\"candidateVersion\":\"v3\",\"mode\":\"BACKWARD\",\"commitSha\":\"phase22-postman-unavailable-breaking\",\"triggeredBy\":\"postman-phase22\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 202\", () => pm.response.to.have.status(202));",
+                  "const j=pm.response.json();",
+                  "pm.test(\"run queued\", () => { pm.expect(j.status).to.eql(\"QUEUED\"); pm.expect(j.runId).to.be.a(\"string\").and.not.empty; });",
+                  "pm.environment.set(\"phase22_unavailable-breaking_run_id\",j.runId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Poll unavailable-breaking deterministic result",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks/{{phase22_unavailable-breaking_run_id}}",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks",
+                "{{phase22_unavailable-breaking_run_id}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const j=pm.response.json();",
+                  "pm.test(\"FAIL remains authoritative\", () => { pm.expect(j.runId).to.eql(pm.environment.get(\"phase22_unavailable-breaking_run_id\")); pm.expect(j.status).to.eql(\"FAIL\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Retrieve unavailable-breaking advisory",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks/{{phase22_unavailable-breaking_run_id}}/advisory",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks",
+                "{{phase22_unavailable-breaking_run_id}}",
+                "advisory"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const j=pm.response.json();",
+                  "pm.test(\"linked advisory\", () => { pm.expect(j.runId).to.eql(pm.environment.get(\"phase22_unavailable-breaking_run_id\")); pm.expect(j.advisoryOnly).to.eql(true); pm.expect(j.status).to.eql(\"UNAVAILABLE\"); pm.expect(j.testOnlyAdapter).to.eql(false); });",
+                  "pm.test(\"no fabricated prediction\", () => { pm.expect(j.predictionLabel).to.eql(null); pm.expect(j.probabilities).to.eql(null); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Retrieve unavailable-breaking logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks/{{phase22_unavailable-breaking_run_id}}/logs",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks",
+                "{{phase22_unavailable-breaking_run_id}}",
+                "logs"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const rows=pm.response.json();",
+                  "pm.test(\"separate advisory log\", () => { pm.expect(rows.some(x=>x.runId===pm.environment.get(\"phase22_unavailable-breaking_run_id\") && x.message.includes(\"code=ai_advisory_completed\"))).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Submit timeout service check",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"contractId\":\"iems.enrollment\",\"baseVersion\":\"v1\",\"candidateVersion\":\"v3\",\"mode\":\"BACKWARD\",\"commitSha\":\"phase22-postman-timeout\",\"triggeredBy\":\"postman-phase22\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 202\", () => pm.response.to.have.status(202));",
+                  "const j=pm.response.json();",
+                  "pm.test(\"run queued\", () => { pm.expect(j.status).to.eql(\"QUEUED\"); pm.expect(j.runId).to.be.a(\"string\").and.not.empty; });",
+                  "pm.environment.set(\"phase22_timeout_run_id\",j.runId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Poll timeout deterministic result",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks/{{phase22_timeout_run_id}}",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks",
+                "{{phase22_timeout_run_id}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const j=pm.response.json();",
+                  "pm.test(\"FAIL remains authoritative\", () => { pm.expect(j.runId).to.eql(pm.environment.get(\"phase22_timeout_run_id\")); pm.expect(j.status).to.eql(\"FAIL\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Retrieve timeout advisory",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks/{{phase22_timeout_run_id}}/advisory",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks",
+                "{{phase22_timeout_run_id}}",
+                "advisory"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const j=pm.response.json();",
+                  "pm.test(\"linked advisory\", () => { pm.expect(j.runId).to.eql(pm.environment.get(\"phase22_timeout_run_id\")); pm.expect(j.advisoryOnly).to.eql(true); pm.expect(j.status).to.eql(\"TIMEOUT\"); pm.expect(j.testOnlyAdapter).to.eql(true); });",
+                  "pm.test(\"no fabricated prediction\", () => { pm.expect(j.predictionLabel).to.eql(null); pm.expect(j.probabilities).to.eql(null); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Retrieve timeout logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks/{{phase22_timeout_run_id}}/logs",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks",
+                "{{phase22_timeout_run_id}}",
+                "logs"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const rows=pm.response.json();",
+                  "pm.test(\"separate advisory log\", () => { pm.expect(rows.some(x=>x.runId===pm.environment.get(\"phase22_timeout_run_id\") && x.message.includes(\"code=ai_advisory_completed\"))).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Submit invalid-output service check",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"contractId\":\"iems.enrollment\",\"baseVersion\":\"v1\",\"candidateVersion\":\"v3\",\"mode\":\"BACKWARD\",\"commitSha\":\"phase22-postman-invalid-output\",\"triggeredBy\":\"postman-phase22\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 202\", () => pm.response.to.have.status(202));",
+                  "const j=pm.response.json();",
+                  "pm.test(\"run queued\", () => { pm.expect(j.status).to.eql(\"QUEUED\"); pm.expect(j.runId).to.be.a(\"string\").and.not.empty; });",
+                  "pm.environment.set(\"phase22_invalid-output_run_id\",j.runId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Poll invalid-output deterministic result",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks/{{phase22_invalid-output_run_id}}",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks",
+                "{{phase22_invalid-output_run_id}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const j=pm.response.json();",
+                  "pm.test(\"FAIL remains authoritative\", () => { pm.expect(j.runId).to.eql(pm.environment.get(\"phase22_invalid-output_run_id\")); pm.expect(j.status).to.eql(\"FAIL\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Retrieve invalid-output advisory",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks/{{phase22_invalid-output_run_id}}/advisory",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks",
+                "{{phase22_invalid-output_run_id}}",
+                "advisory"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const j=pm.response.json();",
+                  "pm.test(\"linked advisory\", () => { pm.expect(j.runId).to.eql(pm.environment.get(\"phase22_invalid-output_run_id\")); pm.expect(j.advisoryOnly).to.eql(true); pm.expect(j.status).to.eql(\"INVALID_OUTPUT\"); pm.expect(j.testOnlyAdapter).to.eql(true); });",
+                  "pm.test(\"no fabricated prediction\", () => { pm.expect(j.predictionLabel).to.eql(null); pm.expect(j.probabilities).to.eql(null); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Retrieve invalid-output logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks/{{phase22_invalid-output_run_id}}/logs",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks",
+                "{{phase22_invalid-output_run_id}}",
+                "logs"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const rows=pm.response.json();",
+                  "pm.test(\"separate advisory log\", () => { pm.expect(rows.some(x=>x.runId===pm.environment.get(\"phase22_invalid-output_run_id\") && x.message.includes(\"code=ai_advisory_completed\"))).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Submit disagreement service check",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"contractId\":\"iems.enrollment\",\"baseVersion\":\"v1\",\"candidateVersion\":\"v3\",\"mode\":\"BACKWARD\",\"commitSha\":\"phase22-postman-disagreement\",\"triggeredBy\":\"postman-phase22\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 202\", () => pm.response.to.have.status(202));",
+                  "const j=pm.response.json();",
+                  "pm.test(\"run queued\", () => { pm.expect(j.status).to.eql(\"QUEUED\"); pm.expect(j.runId).to.be.a(\"string\").and.not.empty; });",
+                  "pm.environment.set(\"phase22_disagreement_run_id\",j.runId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Poll disagreement deterministic result",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks/{{phase22_disagreement_run_id}}",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks",
+                "{{phase22_disagreement_run_id}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const j=pm.response.json();",
+                  "pm.test(\"FAIL remains authoritative\", () => { pm.expect(j.runId).to.eql(pm.environment.get(\"phase22_disagreement_run_id\")); pm.expect(j.status).to.eql(\"FAIL\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Retrieve disagreement advisory",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks/{{phase22_disagreement_run_id}}/advisory",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks",
+                "{{phase22_disagreement_run_id}}",
+                "advisory"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const j=pm.response.json();",
+                  "pm.test(\"linked advisory\", () => { pm.expect(j.runId).to.eql(pm.environment.get(\"phase22_disagreement_run_id\")); pm.expect(j.advisoryOnly).to.eql(true); pm.expect(j.status).to.eql(\"AVAILABLE\"); pm.expect(j.testOnlyAdapter).to.eql(true); });",
+                  "pm.test(\"prediction and agreement\", () => { pm.expect(j.predictionLabel).to.eql(\"SAFE\"); pm.expect(j.agreement).to.eql(\"DISAGREES\"); pm.expect(j.probabilities[\"SAFE\"]).to.be.a(\"number\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Retrieve disagreement logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks/{{phase22_disagreement_run_id}}/logs",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks",
+                "{{phase22_disagreement_run_id}}",
+                "logs"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const rows=pm.response.json();",
+                  "pm.test(\"separate advisory log\", () => { pm.expect(rows.some(x=>x.runId===pm.environment.get(\"phase22_disagreement_run_id\") && x.message.includes(\"code=ai_advisory_completed\"))).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Phase 2.2 \u2014 verify existing fault runs",
+      "description": "Read-only verification after the isolated fault rehearsal. Supply run IDs from private evidence in the environment; this folder does not submit checks or need a model process.",
+      "item": [
+        {
+          "name": "Poll unavailable-compatible deterministic result",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks/{{phase22_unavailable-compatible_run_id}}",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks",
+                "{{phase22_unavailable-compatible_run_id}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const j=pm.response.json();",
+                  "pm.test(\"PASS remains authoritative\", () => { pm.expect(j.runId).to.eql(pm.environment.get(\"phase22_unavailable-compatible_run_id\")); pm.expect(j.status).to.eql(\"PASS\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Retrieve unavailable-compatible advisory",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks/{{phase22_unavailable-compatible_run_id}}/advisory",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks",
+                "{{phase22_unavailable-compatible_run_id}}",
+                "advisory"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const j=pm.response.json();",
+                  "pm.test(\"linked advisory\", () => { pm.expect(j.runId).to.eql(pm.environment.get(\"phase22_unavailable-compatible_run_id\")); pm.expect(j.advisoryOnly).to.eql(true); pm.expect(j.status).to.eql(\"UNAVAILABLE\"); pm.expect(j.testOnlyAdapter).to.eql(false); });",
+                  "pm.test(\"no fabricated prediction\", () => { pm.expect(j.predictionLabel).to.eql(null); pm.expect(j.probabilities).to.eql(null); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Retrieve unavailable-compatible logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks/{{phase22_unavailable-compatible_run_id}}/logs",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks",
+                "{{phase22_unavailable-compatible_run_id}}",
+                "logs"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const rows=pm.response.json();",
+                  "pm.test(\"separate advisory log\", () => { pm.expect(rows.some(x=>x.runId===pm.environment.get(\"phase22_unavailable-compatible_run_id\") && x.message.includes(\"code=ai_advisory_completed\"))).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Poll unavailable-breaking deterministic result",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks/{{phase22_unavailable-breaking_run_id}}",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks",
+                "{{phase22_unavailable-breaking_run_id}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const j=pm.response.json();",
+                  "pm.test(\"FAIL remains authoritative\", () => { pm.expect(j.runId).to.eql(pm.environment.get(\"phase22_unavailable-breaking_run_id\")); pm.expect(j.status).to.eql(\"FAIL\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Retrieve unavailable-breaking advisory",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks/{{phase22_unavailable-breaking_run_id}}/advisory",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks",
+                "{{phase22_unavailable-breaking_run_id}}",
+                "advisory"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const j=pm.response.json();",
+                  "pm.test(\"linked advisory\", () => { pm.expect(j.runId).to.eql(pm.environment.get(\"phase22_unavailable-breaking_run_id\")); pm.expect(j.advisoryOnly).to.eql(true); pm.expect(j.status).to.eql(\"UNAVAILABLE\"); pm.expect(j.testOnlyAdapter).to.eql(false); });",
+                  "pm.test(\"no fabricated prediction\", () => { pm.expect(j.predictionLabel).to.eql(null); pm.expect(j.probabilities).to.eql(null); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Retrieve unavailable-breaking logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks/{{phase22_unavailable-breaking_run_id}}/logs",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks",
+                "{{phase22_unavailable-breaking_run_id}}",
+                "logs"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const rows=pm.response.json();",
+                  "pm.test(\"separate advisory log\", () => { pm.expect(rows.some(x=>x.runId===pm.environment.get(\"phase22_unavailable-breaking_run_id\") && x.message.includes(\"code=ai_advisory_completed\"))).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Poll timeout deterministic result",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks/{{phase22_timeout_run_id}}",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks",
+                "{{phase22_timeout_run_id}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const j=pm.response.json();",
+                  "pm.test(\"FAIL remains authoritative\", () => { pm.expect(j.runId).to.eql(pm.environment.get(\"phase22_timeout_run_id\")); pm.expect(j.status).to.eql(\"FAIL\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Retrieve timeout advisory",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks/{{phase22_timeout_run_id}}/advisory",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks",
+                "{{phase22_timeout_run_id}}",
+                "advisory"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const j=pm.response.json();",
+                  "pm.test(\"linked advisory\", () => { pm.expect(j.runId).to.eql(pm.environment.get(\"phase22_timeout_run_id\")); pm.expect(j.advisoryOnly).to.eql(true); pm.expect(j.status).to.eql(\"TIMEOUT\"); pm.expect(j.testOnlyAdapter).to.eql(true); });",
+                  "pm.test(\"no fabricated prediction\", () => { pm.expect(j.predictionLabel).to.eql(null); pm.expect(j.probabilities).to.eql(null); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Retrieve timeout logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks/{{phase22_timeout_run_id}}/logs",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks",
+                "{{phase22_timeout_run_id}}",
+                "logs"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const rows=pm.response.json();",
+                  "pm.test(\"separate advisory log\", () => { pm.expect(rows.some(x=>x.runId===pm.environment.get(\"phase22_timeout_run_id\") && x.message.includes(\"code=ai_advisory_completed\"))).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Poll invalid-output deterministic result",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks/{{phase22_invalid-output_run_id}}",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks",
+                "{{phase22_invalid-output_run_id}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const j=pm.response.json();",
+                  "pm.test(\"FAIL remains authoritative\", () => { pm.expect(j.runId).to.eql(pm.environment.get(\"phase22_invalid-output_run_id\")); pm.expect(j.status).to.eql(\"FAIL\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Retrieve invalid-output advisory",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks/{{phase22_invalid-output_run_id}}/advisory",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks",
+                "{{phase22_invalid-output_run_id}}",
+                "advisory"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const j=pm.response.json();",
+                  "pm.test(\"linked advisory\", () => { pm.expect(j.runId).to.eql(pm.environment.get(\"phase22_invalid-output_run_id\")); pm.expect(j.advisoryOnly).to.eql(true); pm.expect(j.status).to.eql(\"INVALID_OUTPUT\"); pm.expect(j.testOnlyAdapter).to.eql(true); });",
+                  "pm.test(\"no fabricated prediction\", () => { pm.expect(j.predictionLabel).to.eql(null); pm.expect(j.probabilities).to.eql(null); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Retrieve invalid-output logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks/{{phase22_invalid-output_run_id}}/logs",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks",
+                "{{phase22_invalid-output_run_id}}",
+                "logs"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const rows=pm.response.json();",
+                  "pm.test(\"separate advisory log\", () => { pm.expect(rows.some(x=>x.runId===pm.environment.get(\"phase22_invalid-output_run_id\") && x.message.includes(\"code=ai_advisory_completed\"))).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Poll disagreement deterministic result",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks/{{phase22_disagreement_run_id}}",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks",
+                "{{phase22_disagreement_run_id}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const j=pm.response.json();",
+                  "pm.test(\"FAIL remains authoritative\", () => { pm.expect(j.runId).to.eql(pm.environment.get(\"phase22_disagreement_run_id\")); pm.expect(j.status).to.eql(\"FAIL\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Retrieve disagreement advisory",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks/{{phase22_disagreement_run_id}}/advisory",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks",
+                "{{phase22_disagreement_run_id}}",
+                "advisory"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const j=pm.response.json();",
+                  "pm.test(\"linked advisory\", () => { pm.expect(j.runId).to.eql(pm.environment.get(\"phase22_disagreement_run_id\")); pm.expect(j.advisoryOnly).to.eql(true); pm.expect(j.status).to.eql(\"AVAILABLE\"); pm.expect(j.testOnlyAdapter).to.eql(true); });",
+                  "pm.test(\"prediction and agreement\", () => { pm.expect(j.predictionLabel).to.eql(\"SAFE\"); pm.expect(j.agreement).to.eql(\"DISAGREES\"); pm.expect(j.probabilities[\"SAFE\"]).to.be.a(\"number\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Retrieve disagreement logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{dcg_base_url}}/checks/{{phase22_disagreement_run_id}}/logs",
+              "host": [
+                "{{dcg_base_url}}"
+              ],
+              "path": [
+                "checks",
+                "{{phase22_disagreement_run_id}}",
+                "logs"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "const rows=pm.response.json();",
+                  "pm.test(\"separate advisory log\", () => { pm.expect(rows.some(x=>x.runId===pm.environment.get(\"phase22_disagreement_run_id\") && x.message.includes(\"code=ai_advisory_completed\"))).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

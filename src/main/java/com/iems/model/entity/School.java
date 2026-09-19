@@ -38,6 +38,12 @@ public class School {
     @Column(nullable = false, length = 200)
     private String name;
 
+    @Column(length = 50, unique = true)
+    private String code;
+
+    @Column(length = 100)
+    private String district;
+
     @Column(length = 500)
     private String address;
 
@@ -109,6 +115,11 @@ public class School {
         this.address = address;
         this.email = email;
     }
+
+    public String getCode() { return code; }
+    public void setCode(String code) { this.code = code; }
+    public String getDistrict() { return district; }
+    public void setDistrict(String district) { this.district = district; }
 
     // Getters and Setters
     public Long getId() {

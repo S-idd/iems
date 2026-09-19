@@ -26,6 +26,7 @@ import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 
 import com.iems.kafka.model.AccessibilityEvent;
+import com.iems.dcg.validation.IemsEventJson;
 
 /**
  * Kafka configuration for event-driven communication.
@@ -41,6 +42,12 @@ public class KafkaConfig {
     @Value("${spring.kafka.consumer.group-id}")
     private String consumerGroupId;
 
+    @Value("${spring.kafka.listener.auto-startup:true}")
+    private boolean listenerAutoStartup;
+
+    @Value("${spring.kafka.admin.auto-create:true}")
+    private boolean adminAutoCreate;
+
     // Topic names
     public static final String ACCESSIBILITY_EVENTS_TOPIC = "iems.events.accessibility";
     public static final String SCHOLARSHIP_EVENTS_TOPIC = "iems.events.scholarship";
@@ -55,7 +62,9 @@ public class KafkaConfig {
     public KafkaAdmin kafkaAdmin() {
         Map<String, Object> configs = new HashMap<>();
         configs.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        return new KafkaAdmin(configs);
+        KafkaAdmin admin = new KafkaAdmin(configs);
+        admin.setAutoCreate(adminAutoCreate);
+        return admin;
     }
 
     /**
@@ -140,7 +149,8 @@ public class KafkaConfig {
         configProps.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);
         configProps.put(JsonSerializer.ADD_TYPE_INFO_HEADERS, false);
         
-        return new DefaultKafkaProducerFactory<>(configProps);
+        return new DefaultKafkaProducerFactory<>(configProps,
+                new StringSerializer(), new JsonSerializer<>(IemsEventJson.mapper()));
     }
 
     /**
@@ -188,6 +198,7 @@ public class KafkaConfig {
         ConcurrentKafkaListenerContainerFactory<String, Object> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
+        factory.setAutoStartup(listenerAutoStartup);
         factory.setConcurrency(3);
         factory.getContainerProperties().setPollTimeout(3000);
         return factory;

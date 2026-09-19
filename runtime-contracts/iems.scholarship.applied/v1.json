@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "scholarshipId": {
+      "type": "integer"
+    },
+    "studentId": {
+      "type": "integer"
+    },
+    "studentName": {
+      "type": "string"
+    },
+    "eventType": {
+      "type": "string",
+      "const": "APPLIED"
+    },
+    "status": {
+      "type": "string",
+      "const": "PENDING"
+    },
+    "amount": {
+      "type": "number"
+    },
+    "timestamp": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "scholarshipId",
+    "studentId",
+    "studentName",
+    "eventType",
+    "status",
+    "amount",
+    "timestamp"
+  ]
+}

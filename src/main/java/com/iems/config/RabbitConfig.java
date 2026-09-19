@@ -22,6 +22,9 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitConfig {
 
+    @org.springframework.beans.factory.annotation.Value("${spring.rabbitmq.listener.simple.auto-startup:true}")
+    private boolean listenerAutoStartup;
+
     // Exchange names
     public static final String TASKS_EXCHANGE = "iems.tasks.exchange";
     public static final String DLX_EXCHANGE = "iems.tasks.dlx";
@@ -174,6 +177,7 @@ public class RabbitConfig {
             ConnectionFactory connectionFactory) {
         SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
         factory.setConnectionFactory(connectionFactory);
+        factory.setAutoStartup(listenerAutoStartup);
         factory.setMessageConverter(messageConverter());
         factory.setConcurrentConsumers(3);
         factory.setMaxConcurrentConsumers(10);

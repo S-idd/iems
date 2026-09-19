@@ -16,6 +16,9 @@ import org.springframework.stereotype.Component;
 public class TaskProducer {
     private static final Logger logger = LoggerFactory.getLogger(TaskProducer.class);
 
+    @org.springframework.beans.factory.annotation.Value("${app.messaging.enabled:true}")
+    private boolean messagingEnabled;
+
     @Autowired
     private RabbitTemplate rabbitTemplate;
 
@@ -23,6 +26,7 @@ public class TaskProducer {
      * Send email task to email queue.
      */
     public void sendEmailTask(EmailTask task) {
+        if (!messagingEnabled) return;
         logger.info("Sending email task to queue: {}", task.getTo());
         try {
             rabbitTemplate.convertAndSend(
@@ -41,6 +45,7 @@ public class TaskProducer {
      * Send PDF generation task to PDF queue.
      */
     public void sendPdfTask(PdfTask task) {
+        if (!messagingEnabled) return;
         logger.info("Sending PDF generation task to queue: {}", task.getDocumentType());
         try {
             rabbitTemplate.convertAndSend(

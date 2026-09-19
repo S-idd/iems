@@ -13,7 +13,6 @@ import org.springframework.stereotype.Component;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -109,45 +108,10 @@ public class JwtTokenProvider {
         return false;
     }
 
-    /**
-     * Parse claims in a way that's compatible with multiple JJWT API versions.
-     */
+    /** Parse signed access and refresh tokens with the pinned JJWT 0.12 API. */
     private Claims parseClaims(String token) {
-        try {
-            // Try the newer parserBuilder() -> build() -> parseClaimsJws(...) path
-            try {
-                java.lang.reflect.Method parserBuilderMethod = Jwts.class.getMethod("parserBuilder");
-                Object builder = parserBuilderMethod.invoke(null);
-                java.lang.reflect.Method setSigningKeyMethod = builder.getClass().getMethod("setSigningKey", java.security.Key.class);
-                setSigningKeyMethod.invoke(builder, getSigningKey());
-                java.lang.reflect.Method buildMethod = builder.getClass().getMethod("build");
-                Object parser = buildMethod.invoke(builder);
-                java.lang.reflect.Method parseMethod = parser.getClass().getMethod("parseClaimsJws", String.class);
-                Object jws = parseMethod.invoke(parser, token);
-                java.lang.reflect.Method getBody = jws.getClass().getMethod("getBody");
-                return (Claims) getBody.invoke(jws);
-            } catch (NoSuchMethodException nsme) {
-                // Fallback to older parser() API
-                java.lang.reflect.Method parserMethod = Jwts.class.getMethod("parser");
-                Object parser = parserMethod.invoke(null);
-                // try setSigningKey(Key) then setSigningKey(byte[])
-                try {
-                    java.lang.reflect.Method setKey = parser.getClass().getMethod("setSigningKey", java.security.Key.class);
-                    setKey.invoke(parser, getSigningKey());
-                } catch (NoSuchMethodException e) {
-                    java.lang.reflect.Method setKey2 = parser.getClass().getMethod("setSigningKey", byte[].class);
-                    setKey2.invoke(parser, (Object) jwtSecret.getBytes(StandardCharsets.UTF_8));
-                }
-                java.lang.reflect.Method parseMethod = parser.getClass().getMethod("parseClaimsJws", String.class);
-                Object jws = parseMethod.invoke(parser, token);
-                java.lang.reflect.Method getBody = jws.getClass().getMethod("getBody");
-                return (Claims) getBody.invoke(jws);
-            }
-        } catch (RuntimeException re) {
-            throw re;
-        } catch (Exception e) {
-            throw new JwtException("Failed to parse JWT token", e);
-        }
+        return Jwts.parser().verifyWith(getSigningKey()).build()
+                .parseSignedClaims(token).getPayload();
     }
 
     /**

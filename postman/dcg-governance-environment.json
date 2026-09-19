@@ -1,0 +1,66 @@
+{
+  "name": "IEMS DCG local isolated service",
+  "values": [
+    {
+      "key": "dcg_base_url",
+      "value": "http://127.0.0.1:8080",
+      "enabled": true
+    },
+    {
+      "key": "dcg_username",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "key": "dcg_password",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "key": "compatible_run_id",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "key": "breaking_run_id",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "key": "phase22_compatible_run_id",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "key": "phase22_breaking_run_id",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "key": "phase22_unavailable-compatible_run_id",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "key": "phase22_unavailable-breaking_run_id",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "key": "phase22_timeout_run_id",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "key": "phase22_invalid-output_run_id",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "key": "phase22_disagreement_run_id",
+      "value": "",
+      "enabled": true
+    }
+  ],
+  "_postman_variable_scope": "environment"
+}

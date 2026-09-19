@@ -1,6 +1,6 @@
 package com.iems.controller;
 
-import com.iems.model.entity.Notification;
+import com.iems.model.dto.NotificationDto;
 import com.iems.security.UserPrincipal;
 import com.iems.service.NotificationService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -27,17 +27,19 @@ public class NotificationController {
 
     @GetMapping
     @Operation(summary = "Get user notifications", description = "Get all notifications for current user")
-    public ResponseEntity<List<Notification>> getUserNotifications(
+    public ResponseEntity<List<NotificationDto>> getUserNotifications(
             @AuthenticationPrincipal UserPrincipal userPrincipal) {
-        List<Notification> notifications = notificationService.getNotificationsByUser(userPrincipal.getId());
+        List<NotificationDto> notifications = notificationService.getNotificationsByUser(userPrincipal.getId())
+                .stream().map(NotificationDto::from).toList();
         return ResponseEntity.ok(notifications);
     }
 
     @GetMapping("/unread")
     @Operation(summary = "Get unread notifications", description = "Get unread notifications for current user")
-    public ResponseEntity<List<Notification>> getUnreadNotifications(
+    public ResponseEntity<List<NotificationDto>> getUnreadNotifications(
             @AuthenticationPrincipal UserPrincipal userPrincipal) {
-        List<Notification> notifications = notificationService.getUnreadNotifications(userPrincipal.getId());
+        List<NotificationDto> notifications = notificationService.getUnreadNotifications(userPrincipal.getId())
+                .stream().map(NotificationDto::from).toList();
         return ResponseEntity.ok(notifications);
     }
 
@@ -51,8 +53,9 @@ public class NotificationController {
 
     @PutMapping("/{id}/read")
     @Operation(summary = "Mark as read", description = "Mark a notification as read")
-    public ResponseEntity<Void> markAsRead(@PathVariable Long id) {
-        notificationService.markAsRead(id);
+    public ResponseEntity<Void> markAsRead(@PathVariable Long id,
+            @AuthenticationPrincipal UserPrincipal userPrincipal) {
+        notificationService.markAsRead(id, userPrincipal.getId());
         return ResponseEntity.noContent().build();
     }
 
@@ -66,8 +69,9 @@ public class NotificationController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete notification", description = "Delete a notification")
-    public ResponseEntity<Void> deleteNotification(@PathVariable Long id) {
-        notificationService.deleteNotification(id);
+    public ResponseEntity<Void> deleteNotification(@PathVariable Long id,
+            @AuthenticationPrincipal UserPrincipal userPrincipal) {
+        notificationService.deleteNotification(id, userPrincipal.getId());
         return ResponseEntity.noContent().build();
     }
 }

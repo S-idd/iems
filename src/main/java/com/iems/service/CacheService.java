@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Service for managing Redis cache operations.
  */
+@org.springframework.context.annotation.Profile("!db-demo")
 @Service
 public class CacheService {
 
