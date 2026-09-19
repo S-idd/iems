@@ -98,6 +98,6 @@ IEMS_DCG_SERVICE_EVIDENCE="$PWD/.dcg/rehearsals/service-registry-dashboard-20260
   -Dsurefire.failIfNoSpecifiedTests=false test
 ```
 
-The private [live report](../.dcg/rehearsals/service-registry-dashboard-20260918-04/results.json) records the two run IDs, schema hashes, REST and dashboard correlations, persistence, unchanged source/package inventories, absence of Rust, and released port. The full Postman write/poll run is in `.dcg/rehearsals/service-registry-dashboard-postman-full-20260918-01/`.
+The private local report `.dcg/rehearsals/service-registry-dashboard-20260918-04/results.json` records the two run IDs, schema hashes, REST and dashboard correlations, persistence, unchanged source/package inventories, absence of Rust, and released port. The full Postman write/poll run is in `.dcg/rehearsals/service-registry-dashboard-postman-full-20260918-01/`.
 
 The current service does not continuously discover manual DDL changes in an IEMS database. This task does not enable webhooks, runtime payload validation, physical migration gating, PostgreSQL/MySQL matrices, S3, CI/OIDC, or AI. The next separate Phase 1 task is **webhook notification and delivery verification**.

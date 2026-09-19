@@ -54,7 +54,7 @@ The runner performs these assertions in order:
 7. Confirm the DCG `/ui/notifications` page shows the retried run and `DELIVERED`, the IEMS user `notifications` table still has zero rows, and the read-only Postman verification succeeds.
 8. Stop both owned services, release both ports, and confirm no Rust model started and the source contracts, package, and built IEMS JAR stayed unchanged.
 
-A completed run retains `results.json`, all four isolated stores, sanitized check/delivery/inbox JSON in `evidence/`, real `dcg-notifications.html`, Newman output, and service logs. The [verified 2026-09-18 report](../.dcg/rehearsals/webhook-delivery-20260918-04/results.json) records the exact IDs and both before/after states. That run used DCG port `56340` and an isolated IEMS loopback port; both are now released.
+A completed run retains `results.json`, all four isolated stores, sanitized check/delivery/inbox JSON in `evidence/`, real `dcg-notifications.html`, Newman output, and service logs. The private local report `.dcg/rehearsals/webhook-delivery-20260918-04/results.json` records the exact IDs and both before/after states. That run used DCG port `56340` and an isolated IEMS loopback port; both are now released.
 
 ## Show the retained data live
 
