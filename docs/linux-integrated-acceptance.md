@@ -45,23 +45,30 @@ Expected: Java reports Temurin 21; the DCG reactor ends with `BUILD SUCCESS`; bo
 
 ## Run the bound Linux integration
 
-The following paths match the accepted build and report shown by the WSL2 development workflow. If the accepted run was intentionally retained under another new work directory, change only `LINUX_BUILD`; keep the pinned filenames.
+Set `LINUX_BUILD` to the successful development workflow directory. The discovery commands require exactly one accepted archive and one acceptance report below it, so an old failed-workflow timestamp cannot be used accidentally.
 
 ```bash
 cd "$HOME/projects/dcg-current-linux/iems"
 
-export LINUX_BUILD="$HOME/projects/dcg-development-linux-20260920T111703Z"
-export DCG_ARCHIVE="$LINUX_BUILD/acceptance-handoff/dcg-4.0.0-phase1-phase2-dev.20260920-linux-x64.tar.gz"
-export DCG_ACCEPTANCE_REPORT="$LINUX_BUILD/acceptance/acceptance-report.json"
+export LINUX_BUILD="$HOME/projects/dcg-development-linux-20260920T113540Z"
+
+mapfile -t DCG_ARCHIVES < <(find "$LINUX_BUILD" -type f \
+  -name 'dcg-4.0.0-phase1-phase2-dev.20260920-linux-x64.tar.gz' -print)
+mapfile -t DCG_ACCEPTANCE_REPORTS < <(find "$LINUX_BUILD" -type f \
+  -name 'acceptance-report.json' -print)
+
+test "${#DCG_ARCHIVES[@]}" -eq 1
+test "${#DCG_ACCEPTANCE_REPORTS[@]}" -eq 1
+
+export DCG_ARCHIVE="${DCG_ARCHIVES[0]}"
+export DCG_ACCEPTANCE_REPORT="${DCG_ACCEPTANCE_REPORTS[0]}"
 
 test -f "$DCG_ARCHIVE"
 test -f "$DCG_ACCEPTANCE_REPORT"
-printf '%s  %s\n' \
-  '5ec42c1c412b1ccf4fb650991ffae81804d80c08c3e77388002167cbcc8349bc' \
-  "$DCG_ARCHIVE" | sha256sum --check
-printf '%s  %s\n' \
-  'c18742f6d458ee1e3e039a632d4978fcd717b1f41757b0d1cae0d3afc12e133f' \
-  "$DCG_ACCEPTANCE_REPORT" | sha256sum --check
+test "$(sha256sum "$DCG_ARCHIVE" | awk '{print $1}')" = \
+  '5ec42c1c412b1ccf4fb650991ffae81804d80c08c3e77388002167cbcc8349bc'
+test "$(sha256sum "$DCG_ACCEPTANCE_REPORT" | awk '{print $1}')" = \
+  'c18742f6d458ee1e3e039a632d4978fcd717b1f41757b0d1cae0d3afc12e133f'
 jq -e '.status == "PASS" and ([.checks[].status] | all(. == "PASS"))' "$DCG_ACCEPTANCE_REPORT"
 
 export EVIDENCE="$PWD/.dcg/rehearsals/phase2-integrated-linux-$(date -u +%Y%m%dT%H%M%SZ)"
