@@ -21,6 +21,48 @@ import phase2_service_demo as service
 LIVE_PACKAGE = os.environ.get("IEMS_DCG_PACKAGE_TEST_ROOT")
 
 
+class RustProvenanceShapeTest(unittest.TestCase):
+    def test_clean_current_source_linux_build_is_accepted(self):
+        java_commit, rust_commit = "a" * 40, "b" * 40
+        development = {"java_build_commit": java_commit, "rust_commit": rust_commit}
+        build = {
+            "development_source": {"java_build_commit": java_commit, "rust_commit": rust_commit,
+                                   "packaging_commit": java_commit, "clean": True},
+            "rust_path_remapping": {
+                "schema_version": 1, "applied": True, "source_prefix": "<builder-home>",
+                "destination_prefix": "/dcg-build-home",
+                "reason": "Prevent developer-specific absolute source paths in the packaged Rust executable",
+                "rustflags": "--remap-path-prefix=<builder-home>=/dcg-build-home",
+            },
+        }
+        mode = package._rust_provenance_mode(
+            build, development, rust_commit, java_commit, java_commit, False,
+            "x86_64-unknown-linux-gnu", "c" * 64)
+        self.assertEqual("clean-current-source-build", mode)
+
+    def test_clean_current_source_linux_build_requires_path_remapping(self):
+        java_commit, rust_commit = "a" * 40, "b" * 40
+        build = {"development_source": {
+            "java_build_commit": java_commit, "rust_commit": rust_commit,
+            "packaging_commit": java_commit, "clean": True}}
+        development = {"java_build_commit": java_commit, "rust_commit": rust_commit}
+        with self.assertRaisesRegex(package.PackageValidationError, "path-remapping"):
+            package._rust_provenance_mode(
+                build, development, rust_commit, java_commit, java_commit, False,
+                "x86_64-unknown-linux-gnu", "c" * 64)
+
+    def test_clean_current_source_build_rejects_dirty_identity(self):
+        java_commit, rust_commit = "a" * 40, "b" * 40
+        build = {"development_source": {
+            "java_build_commit": java_commit, "rust_commit": rust_commit,
+            "packaging_commit": java_commit, "clean": True}}
+        development = {"java_build_commit": java_commit, "rust_commit": rust_commit}
+        with self.assertRaisesRegex(package.PackageValidationError, "identity disagrees"):
+            package._rust_provenance_mode(
+                build, development, rust_commit, java_commit, java_commit, True,
+                "aarch64-apple-darwin", "c" * 64)
+
+
 @unittest.skipUnless(LIVE_PACKAGE, "Set IEMS_DCG_PACKAGE_TEST_ROOT to a verified package")
 class PackageSelectionValidationTest(unittest.TestCase):
     @classmethod

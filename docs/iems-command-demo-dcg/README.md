@@ -1,6 +1,6 @@
 # IEMS + DCG presenter command guides
 
-These commands present the **verified local macOS ARM64 development demo**. Work from the IEMS repository root, represented below as `/absolute/path/to/iems`. Start with [01 — quick live demo](01-quick-live-demo.md); it runs the final integrated rehearsal and gives a short evidence walkthrough. Use the other guides when the audience asks to see a boundary in more detail. The shared validator also supports native Linux x86_64 packages, pending acceptance on that native host.
+These commands present the **verified local macOS ARM64 development demo**. Work from the IEMS repository root, represented below as `/absolute/path/to/iems`. Start with [01 — quick live demo](01-quick-live-demo.md); it runs the final integrated rehearsal and gives a short evidence walkthrough. Use the other guides when the audience asks to see a boundary in more detail. The Linux x86-64 archive has passed its native WSL2 package acceptance; use the separate [Linux integrated acceptance](../linux-integrated-acceptance.md) to bind that accepted archive to the complete IEMS rehearsal.
 
 The **final verified development package** is:
 

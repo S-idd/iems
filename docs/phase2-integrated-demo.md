@@ -1,5 +1,7 @@
 # Phase 2 integrated DCG–IEMS rehearsal
 
+The original command below is the verified macOS ARM64 rehearsal. For the accepted Linux x86-64 WSL2 archive, use the trust-bound [Linux integrated acceptance](linux-integrated-acceptance.md); it verifies the existing archive-acceptance report and exact archive before running these same 13 IEMS scenarios.
+
 This local macOS ARM64 development rehearsal shows that deterministic DCG owns every PASS/FAIL decision. The Rust model adds an optional advisory label and scores; it never approves a broken schema, starts IEMS, changes Maven packaging, executes SQL, or changes runtime event validation.
 
 ## Verified execution map
@@ -51,4 +53,4 @@ The dashboard pages are checked against a live rendered service response during 
 
 ## Claims and limits
 
-This proves local development behavior on macOS ARM64. AI is advisory only; score calibration is unverified. Runtime evidence proves publisher handoff, not Kafka delivery. Webhook retry was previously demonstrated as **manual** retry, not automatic retry. The physical migration gate covers the governed SQLite runner, not unrestricted direct SQL. PostgreSQL/MySQL acceptance and Linux verification remain incomplete. The model supplies risk labels and scores, not explanations or corrections. The package is an unpublished development build; no commit, tag, release, push or deployment is part of this rehearsal.
+This proves local development behavior on macOS ARM64. The Linux archive has separately passed all 13 native WSL2 package checks; the Linux integrated runner is implemented, and its full WSL2 result must be recorded before claiming Linux IEMS integration acceptance. AI is advisory only; score calibration is unverified. Runtime evidence proves publisher handoff, not Kafka delivery. Webhook retry was previously demonstrated as **manual** retry, not automatic retry. The physical migration gate covers the governed SQLite runner, not unrestricted direct SQL. PostgreSQL/MySQL acceptance remains incomplete. The model supplies risk labels and scores, not explanations or corrections. The package is an unpublished development build; no commit, tag, release, push or deployment is part of this rehearsal.

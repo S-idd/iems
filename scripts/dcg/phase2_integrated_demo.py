@@ -292,6 +292,17 @@ def run(evidence: Path, package: Path, validated_package: dict | None = None) ->
     return report
 
 
+def cleanup(evidence: Path) -> None:
+    evidence = evidence.resolve()
+    require((evidence / '.phase2-integrated-marker').is_file(),
+            'Not a Phase 2 integrated evidence directory')
+    require(p1.stop_recorded_process(evidence), 'Recorded process did not stop')
+    require(service_demo.cleanup_owned(evidence / 'service'), 'Service child cleanup failed')
+    prior = json.loads((evidence / 'results.json').read_text()) if (evidence / 'results.json').exists() else {}
+    require(all(p1.port_released(p) for p in prior.get('ports', [])), 'A task port remains bound')
+    p1.write_json(evidence / 'manual-cleanup.json', {'result': 'PASS', 'portsReleased': True})
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--evidence', required=True, type=Path)
@@ -301,13 +312,7 @@ def main() -> int:
     args = parser.parse_args()
     os.umask(0o077)
     if args.cleanup:
-        evidence = args.evidence.resolve()
-        require((evidence / '.phase2-integrated-marker').is_file(), 'Not a Phase 2 integrated evidence directory')
-        require(p1.stop_recorded_process(evidence), 'Recorded process did not stop')
-        require(service_demo.cleanup_owned(evidence / 'service'), 'Service child cleanup failed')
-        prior = json.loads((evidence / 'results.json').read_text()) if (evidence / 'results.json').exists() else {}
-        require(all(p1.port_released(p) for p in prior.get('ports', [])), 'A task port remains bound')
-        p1.write_json(evidence / 'manual-cleanup.json', {'result': 'PASS', 'portsReleased': True})
+        cleanup(args.evidence)
         return 0
     validated = select_and_validate(args.dcg_home, required_capabilities=PHASE2_CAPABILITIES)
     package = Path(validated['path'])

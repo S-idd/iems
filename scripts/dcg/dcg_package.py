@@ -120,6 +120,48 @@ def _validate_rust_binary(path: Path, platform_label: str) -> None:
              "Rust binary is not a Linux ELF64 x86-64 executable")
 
 
+def _rust_provenance_mode(build: dict, development: dict, rust_commit: str,
+                          java_commit: str, source_commit: str, source_dirty: bool,
+                          target: str, artifact_sha256: str) -> str:
+    """Validate each supported development-build provenance shape without weakening old packages."""
+    rust_reuse = development.get("rust_reuse", {})
+    if rust_reuse:
+        _require(rust_reuse.get("source_commit") == rust_commit, "Rust source provenance disagrees")
+        _require(rust_reuse.get("artifact_sha256") == artifact_sha256
+                 and rust_reuse.get("target") == target, "Rust artifact provenance disagrees")
+        return "reviewed-artifact-reuse"
+
+    development_source = build.get("development_source", {})
+    if development_source:
+        _require(development_source == {
+            "java_build_commit": java_commit,
+            "rust_commit": rust_commit,
+            "packaging_commit": source_commit,
+            "clean": True,
+        }, "Current-source development provenance disagrees")
+        _require(source_dirty is False and development.get("java_build_commit") == java_commit
+                 and development.get("rust_commit") == rust_commit,
+                 "Current-source development identity disagrees")
+        if target == "x86_64-unknown-linux-gnu":
+            expected_remapping = {
+                "schema_version": 1,
+                "applied": True,
+                "source_prefix": "<builder-home>",
+                "destination_prefix": "/dcg-build-home",
+                "reason": "Prevent developer-specific absolute source paths in the packaged Rust executable",
+                "rustflags": "--remap-path-prefix=<builder-home>=/dcg-build-home",
+            }
+            _require(build.get("rust_path_remapping") == expected_remapping,
+                     "Linux Rust path-remapping provenance disagrees")
+        return "clean-current-source-build"
+
+    rust_rebuild = build.get("rust_rebuild", {})
+    _require(rust_rebuild.get("source_dirty") is False
+             and rust_commit in rust_rebuild.get("source_export", ""),
+             "Rust artifact build provenance disagrees")
+    return "reviewed-source-rebuild"
+
+
 def _jar_capabilities(package: Path, cli_name: str, service_name: str) -> tuple[set[str], dict]:
     capabilities: set[str] = set()
     with zipfile.ZipFile(package / cli_name) as cli:
@@ -246,18 +288,11 @@ def validate_package(package_value: str | Path, *, required_capabilities: set[st
              f"Wrong package target for native {platform_label} rehearsal: {target}")
     rust_path = package / "bin/dcgaimodel"
     _validate_rust_binary(rust_path, platform_label)
-    rust_reuse = development.get("rust_reuse", {})
     rust_commit = build.get("rust_commit")
     _require(HEX_160.fullmatch(rust_commit or ""), "Rust source provenance is incomplete")
-    if rust_reuse:
-        _require(rust_reuse.get("source_commit") == rust_commit, "Rust source provenance disagrees")
-        _require(rust_reuse.get("artifact_sha256") == artifacts["bin/dcgaimodel"]
-                 and rust_reuse.get("target") == target, "Rust artifact provenance disagrees")
-    else:
-        rust_rebuild = build.get("rust_rebuild", {})
-        _require(rust_rebuild.get("source_dirty") is False
-                 and rust_commit in rust_rebuild.get("source_export", ""),
-                 "Rust artifact build provenance disagrees")
+    rust_provenance_mode = _rust_provenance_mode(
+        build, development, rust_commit, java_source_commit, source_commit, source_dirty,
+        target, artifacts["bin/dcgaimodel"])
 
     source_artifacts = build.get("source_artifacts", {})
     model_hashes = {name: digest for name, digest in source_artifacts.items() if name.startswith("model/")}
@@ -297,7 +332,8 @@ def validate_package(package_value: str | Path, *, required_capabilities: set[st
         "artifacts": {"cli": {"path": cli_name, "sha256": artifacts[cli_name]},
                       "service": {"path": service_name, "sha256": artifacts[service_name]},
                       "rust": {"path": "bin/dcgaimodel", "sha256": artifacts["bin/dcgaimodel"]}},
-        "rust": {"sourceCommit": rust_commit, "binarySha256": artifacts["bin/dcgaimodel"]},
+        "rust": {"sourceCommit": rust_commit, "binarySha256": artifacts["bin/dcgaimodel"],
+                 "provenanceMode": rust_provenance_mode},
         "models": model_hashes, "featureSchemaVersion": next(iter(feature_versions)),
         "capabilities": sorted(capabilities), "requiredCapabilities": sorted(required_capabilities),
         "checksums": {"result": "PASS", "entries": len(entries), "manifestSha256": manifest_hash},
