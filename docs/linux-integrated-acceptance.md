@@ -17,22 +17,31 @@ The pinned inputs are:
 
 ## Prepare the current IEMS checkout
 
-Run from the IEMS repository on the same AlmaLinux WSL2 machine used for archive acceptance. Java 21, Maven, Node.js, npm and Python 3 must be available. These commands create only ignored Maven output and a private local Newman installation.
+Run on the same AlmaLinux WSL2 machine used for archive acceptance. Java 21, Maven, Node.js, npm and Python 3 must be available. Install the current clean DCG validation starter and Maven plugin into the local Maven repository before building IEMS. These commands create only ignored Maven output, local Maven artifacts and a private Newman installation; they do not change the accepted binary archive.
 
 ```bash
-cd "$HOME/projects/dcg-current-linux/iems"
-
 JAVA_BIN="$(find "$HOME/jdk21" -type f -path '*/bin/java' -perm -u+x -print -quit)"
 test -n "$JAVA_BIN"
 export JAVA_HOME="${JAVA_BIN%/bin/java}"
 export PATH="$JAVA_HOME/bin:$PATH"
 
 java -version
+
+cd "$HOME/projects/dcg-current-linux/data-contract-governance"
+test "$(git rev-parse HEAD)" = "18eda6434049bbebb82c9b3f339fa20521d5081a"
+./mvnw -B -ntp \
+  -pl contract-validation-spring-boot-starter,contract-maven-plugin \
+  -am -DskipTests install
+
+test -f "$HOME/.m2/repository/com/ideas/contracts/contract-validation-spring-boot-starter/4.0.0-rc.1/contract-validation-spring-boot-starter-4.0.0-rc.1.jar"
+test -f "$HOME/.m2/repository/com/ideas/contracts/contract-maven-plugin/4.0.0-rc.1/contract-maven-plugin-4.0.0-rc.1.jar"
+
+cd "$HOME/projects/dcg-current-linux/iems"
 mvn -B -ntp -DskipTests package
 npm install --prefix .dcg/tools --save-exact newman@6.2.2
 ```
 
-Expected: Java reports Temurin 21, Maven creates `target/inclusive-education-management-system-1.0.0-SNAPSHOT.jar`, and Newman is present at `.dcg/tools/node_modules/newman`. AI is not started by these preparation commands.
+Expected: Java reports Temurin 21; the DCG reactor ends with `BUILD SUCCESS`; both local artifact checks pass; IEMS Maven creates `target/inclusive-education-management-system-1.0.0-SNAPSHOT.jar`; and Newman is present at `.dcg/tools/node_modules/newman`. AI is not started by these preparation commands. Maven may retry a temporary repository connection. The existing duplicate `org.apache.flink:flink-json` declaration is a model warning and does not cause this preparation failure; a missing `com.ideas.contracts` artifact means the DCG install step did not complete successfully.
 
 ## Run the bound Linux integration
 
