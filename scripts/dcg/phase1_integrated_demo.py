@@ -35,6 +35,7 @@ def write_json(path: Path, value: object) -> None:
 
 def prepare_evidence(evidence: Path) -> Path:
     root = REHEARSALS.resolve()
+    root.mkdir(parents=True, mode=0o700, exist_ok=True)
     if evidence.absolute().parent.resolve() != root or not evidence.name.startswith('phase1-integrated-'):
         raise ValueError('Evidence must be a new phase1-integrated-* directory directly under .dcg/rehearsals')
     evidence.mkdir(mode=0o700, exist_ok=False)

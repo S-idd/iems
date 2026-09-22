@@ -9,6 +9,7 @@ import sys
 import tempfile
 import time
 import unittest
+from unittest.mock import patch
 
 import phase2_integrated_demo as demo
 import phase2_service_demo as service
@@ -24,6 +25,16 @@ class Phase2SafeguardsTest(unittest.TestCase):
     def test_existing_evidence_refused(self):
         with self.assertRaises(FileExistsError):
             demo.prepare(self.evidence())
+
+    def test_prepare_creates_private_rehearsal_parent_on_fresh_checkout(self):
+        root = Path(tempfile.mkdtemp(prefix='phase2-fresh-root-'))
+        self.addCleanup(lambda: shutil.rmtree(root, ignore_errors=True))
+        rehearsals = root / '.dcg/rehearsals'
+        evidence = rehearsals / 'phase2-integrated-linux-test'
+        with patch.object(demo.p1, 'REHEARSALS', rehearsals):
+            self.assertEqual(evidence.resolve(), demo.prepare(evidence))
+        self.assertEqual(0o700, rehearsals.stat().st_mode & 0o777)
+        self.assertTrue((evidence / '.phase2-integrated-marker').is_file())
 
     def test_wrong_phase2_package_refused(self):
         with self.assertRaisesRegex(ValueError, 'does not exist'):

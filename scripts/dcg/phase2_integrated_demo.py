@@ -23,6 +23,7 @@ REQUIRED = ('baseline', 'real_compatible', 'real_breaking', 'startup_gate', 'mav
 
 def prepare(evidence: Path) -> Path:
     root = p1.REHEARSALS.resolve()
+    root.mkdir(parents=True, mode=0o700, exist_ok=True)
     require(evidence.absolute().parent.resolve() == root and evidence.name.startswith('phase2-integrated-'),
             'Evidence must be a new phase2-integrated-* directory under .dcg/rehearsals')
     evidence.mkdir(mode=0o700, exist_ok=False)
