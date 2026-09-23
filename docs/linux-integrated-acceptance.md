@@ -2,6 +2,8 @@
 
 This runner binds the already accepted Linux DCG archive to the complete IEMS Phase 2 rehearsal. It refuses a different archive name, archive hash, DCG commit, Rust commit, status protocol, host type, or incomplete archive-acceptance report before it starts IEMS.
 
+**Verified result (2026-09-22): PASS on AlmaLinux x86-64 under WSL2.** All 13 integrated scenarios passed. The retained private index is `.dcg/rehearsals/phase2-integrated-linux-20260922T165634Z/results.json`; its SHA-256 is `d623e89c9ce9e5463f4eff6d97034c547816c16617f8a83cf976b3b099be1d55`. All source, package and normal-database preservation checks are true, and all owned processes and ports were released.
+
 The pinned inputs are:
 
 | Input | Accepted value |
@@ -110,4 +112,4 @@ Expected: only PIDs recorded by this rehearsal are considered for shutdown, reco
 
 ## Native verification boundary
 
-The archive itself has passed its Linux x86-64 WSL2 acceptance. This integrated runner and its trust-boundary tests pass on macOS, but the complete command above must finish on WSL2 before claiming Linux IEMS–DCG integration acceptance. A bare-metal Linux host or a different Linux architecture requires a separate acceptance report and reviewed pin update.
+The archive and complete IEMS integration have passed on Linux x86-64 under WSL2. This result covers the disposable SQLite IEMS rehearsal, deterministic CLI/Maven/runtime/migration gates, and optional AI advisory service scenarios. It does not establish PostgreSQL, MySQL, bare-metal Linux, or another architecture; each requires separate acceptance evidence and a reviewed pin update.

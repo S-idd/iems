@@ -1,6 +1,6 @@
 # IEMS + DCG presenter command guides
 
-These commands present the **verified local macOS ARM64 development demo**. Work from the IEMS repository root, represented below as `/absolute/path/to/iems`. Start with [01 — quick live demo](01-quick-live-demo.md); it runs the final integrated rehearsal and gives a short evidence walkthrough. Use the other guides when the audience asks to see a boundary in more detail. The Linux x86-64 archive has passed its native WSL2 package acceptance; use the separate [Linux integrated acceptance](../linux-integrated-acceptance.md) to bind that accepted archive to the complete IEMS rehearsal.
+These commands present the **verified local macOS ARM64 development demo**. Work from the IEMS repository root, represented below as `/absolute/path/to/iems`. Start with [01 — quick live demo](01-quick-live-demo.md); it runs the final integrated rehearsal and gives a short evidence walkthrough. Use the other guides when the audience asks to see a boundary in more detail. The separate [Linux integrated acceptance](../linux-integrated-acceptance.md) passed all 13 scenarios on AlmaLinux x86-64 under WSL2 on 2026-09-22.
 
 The **final verified development package** is:
 
@@ -21,7 +21,7 @@ The Phase 1 and Phase 2 runners now use this same consolidated package after app
 | 10–12 min | Unavailable/fault and test-only disagreement evidence | PASS/FAIL do not change when advice is missing or disagrees. |
 | 12–15 min | Runtime/migration regressions and final recovery | Publisher handoffs 1/0/0; governed SQLite executor calls 1/0; final IEMS/Postman passes. |
 
-**Limits to say aloud:** AI labels and scores are advisory only and their calibration is unverified. The model does not generate explanations or corrections. The runtime test proves publisher handoff, not Kafka delivery. Webhook retry shown here is manual, not automatic. The migration gate covers its governed SQLite runner, not unrestricted direct SQL. PostgreSQL/MySQL and Linux acceptance are outside this completed local development rehearsal. Never use a normal IEMS database or accepted RC as disposable demo state.
+**Limits to say aloud:** AI labels and scores are advisory only and their calibration is unverified. The model does not generate explanations or corrections. The runtime test proves publisher handoff, not Kafka delivery. Webhook retry shown here is manual, not automatic. The migration gate covers its governed SQLite runner, not unrestricted direct SQL. PostgreSQL/MySQL and bare-metal Linux acceptance remain outside the completed macOS and WSL2 development rehearsals. Never use a normal IEMS database or accepted RC as disposable demo state.
 
 ## Guides
 
