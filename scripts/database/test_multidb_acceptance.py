@@ -61,6 +61,15 @@ class DatabaseMatrixAcceptanceTest(unittest.TestCase):
             self.assertEqual('Asia/Calcutta', matrix.os.environ['TZ'])
             self.assertEqual('-Xmx64m', matrix.os.environ['JAVA_TOOL_OPTIONS'])
 
+    def test_default_images_are_unambiguous_docker_hub_references(self):
+        with patch.object(matrix, 'run', return_value=0) as run, \
+             patch.object(matrix.sys, 'argv', ['multidb_acceptance.py',
+                 '--evidence', '/unused', '--dcg-home', '/unused']):
+            self.assertEqual(0, matrix.main())
+            arguments = run.call_args.args[0]
+        self.assertEqual('docker.io/library/postgres:16', arguments.postgres_image)
+        self.assertEqual('docker.io/library/mysql:8.0', arguments.mysql_image)
+
     def test_cleanup_only_removes_containers_with_owned_label(self):
         evidence = self.temporary() / 'database-matrix-fixture'
         evidence.mkdir()

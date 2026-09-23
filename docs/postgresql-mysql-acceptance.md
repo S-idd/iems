@@ -58,8 +58,11 @@ These commands create Maven output and ignored local tooling. They do not start
 AI or create database evidence. On Linux, set `JAVA_HOME` to the Java 21 home
 instead of using `/usr/libexec/java_home`.
 
-The container engine must be running. The default images are `postgres:16` and
-`mysql:8.0`. The first run may download either image.
+The container engine must be running. The default images are the fully
+qualified `docker.io/library/postgres:16` and `docker.io/library/mysql:8.0`.
+Fully qualified names prevent Podman on Linux distributions from resolving a
+short name to an image with a different initialization contract. The first run
+may download either image.
 
 ## Run the matrix
 
@@ -118,10 +121,11 @@ data, the accepted Linux archive, accepted evidence, or unrelated processes.
 ## Verified development result
 
 On 2026-09-23, the matrix passed on macOS ARM64 with Docker Desktop 29.7.2,
-`postgres:16`, and `mysql:8.0`. The private evidence index is
-`.dcg/rehearsals/database-matrix-timezone-20260923T141104Z/results.json`; its
-SHA-256 is
-`7008f5d07ccc04b2468f02eb7b68b6333cd0962e11911bd58610354a9eba2d04`.
+`docker.io/library/postgres:16`, and `docker.io/library/mysql:8.0`. The private
+evidence index is
+`.dcg/rehearsals/database-matrix-qualified-images-20260923T141916Z/results.json`;
+its SHA-256 is
+`bee30327b0987562dc65a0a70f0fbf55b022f9f67dd8df08db8a4546142f53d2`.
 Both engines passed the full endpoint suite, JDBC history verification, and the
 physical migration gate. All preservation and cleanup checks passed.
 
