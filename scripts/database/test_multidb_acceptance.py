@@ -70,6 +70,16 @@ class DatabaseMatrixAcceptanceTest(unittest.TestCase):
         self.assertEqual('docker.io/library/postgres:16', arguments.postgres_image)
         self.assertEqual('docker.io/library/mysql:8.0', arguments.mysql_image)
 
+    def test_mysql_readiness_requires_authenticated_query(self):
+        ready = matrix.subprocess.CompletedProcess([], 0, '1\n1\n', '')
+        with patch.object(matrix.subprocess, 'run', return_value=ready) as run:
+            matrix.wait_database('mysql', 'owned-mysql')
+        command = run.call_args.args[0]
+        self.assertEqual(['docker', 'exec', 'owned-mysql', 'sh', '-c'], command[:5])
+        self.assertIn('MYSQL_ROOT_PASSWORD', command[5])
+        self.assertIn('SELECT 1', command[5])
+        self.assertNotIn('mysqladmin ping', command[5])
+
     def test_cleanup_only_removes_containers_with_owned_label(self):
         evidence = self.temporary() / 'database-matrix-fixture'
         evidence.mkdir()

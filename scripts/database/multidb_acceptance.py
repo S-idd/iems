@@ -104,7 +104,8 @@ def wait_database(engine: str, name: str, timeout: int = 90) -> None:
                                   capture_output=True, text=True)
         else:
             done = subprocess.run(['docker', 'exec', name, 'sh', '-c',
-                'mysqladmin ping -uroot --password="$MYSQL_ROOT_PASSWORD" --silent'],
+                'mysql -uroot --password="$MYSQL_ROOT_PASSWORD" '
+                '--protocol=socket --execute="SELECT 1"'],
                 capture_output=True, text=True)
         if done.returncode == 0:
             return

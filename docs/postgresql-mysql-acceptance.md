@@ -64,6 +64,10 @@ Fully qualified names prevent Podman on Linux distributions from resolving a
 short name to an image with a different initialization contract. The first run
 may download either image.
 
+MySQL readiness is an authenticated `SELECT 1`, rather than an unauthenticated
+process ping. This prevents database creation from racing the image's temporary
+initialization server before the configured root password is active.
+
 ## Run the matrix
 
 Run from the IEMS repository root. Point `DCG_HOME` at a verified extracted
@@ -123,9 +127,9 @@ data, the accepted Linux archive, accepted evidence, or unrelated processes.
 On 2026-09-23, the matrix passed on macOS ARM64 with Docker Desktop 29.7.2,
 `docker.io/library/postgres:16`, and `docker.io/library/mysql:8.0`. The private
 evidence index is
-`.dcg/rehearsals/database-matrix-qualified-images-20260923T141916Z/results.json`;
+`.dcg/rehearsals/database-matrix-auth-ready-20260923T142811Z/results.json`;
 its SHA-256 is
-`bee30327b0987562dc65a0a70f0fbf55b022f9f67dd8df08db8a4546142f53d2`.
+`5d5ac82570f4b367c9fb2e324928556ce833b856fcffe448901a933a0e67d0e2`.
 Both engines passed the full endpoint suite, JDBC history verification, and the
 physical migration gate. All preservation and cleanup checks passed.
 
