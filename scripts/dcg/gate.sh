@@ -6,9 +6,11 @@ ROOT=$(cd "$(dirname "$0")/../.." && pwd)
 BASE=$1; CANDIDATE=$2; shift 3
 umask 077
 mkdir -p "$ROOT/.dcg/data"
+HISTORY=${DCG_SCHEMA_GATE_HISTORY:-$ROOT/.dcg/data/schema-gates.db}
+mkdir -p "$(dirname "$HISTORY")"
 "$ROOT/scripts/dcg.sh" cli check-compat --base "$BASE" --candidate "$CANDIDATE" \
   --mode BACKWARD --contract-id iems.database \
-  --record-db "$ROOT/.dcg/data/schema-gates.db" \
+  --record-db "$HISTORY" \
   --commit-sha "$(git -C "$ROOT" rev-parse HEAD)"
 echo 'DCG PASS: executing the gated command.'
 exec "$@"

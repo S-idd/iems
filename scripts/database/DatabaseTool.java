@@ -18,6 +18,39 @@ class DatabaseTool {
                 try (var statement = conn.createStatement()) { statement.execute(Files.readString(Path.of(args[1]))); }
                 return;
             }
+            if (args[0].equals("seed-notification")) {
+                long adminId;
+                try (var statement = conn.prepareStatement("SELECT id FROM users WHERE username = ?")) {
+                    statement.setString(1, "demo-admin");
+                    try (var rows = statement.executeQuery()) {
+                        if (!rows.next()) throw new IllegalStateException("demo-admin is missing");
+                        adminId = rows.getLong(1);
+                        if (rows.next()) throw new IllegalStateException("demo-admin is not unique");
+                    }
+                }
+                try (var statement = conn.prepareStatement(
+                        "INSERT INTO notifications (user_id,title,message,type,is_read,created_at) " +
+                        "VALUES (?,?,?,?,?,CURRENT_TIMESTAMP)")) {
+                    statement.setLong(1, adminId);
+                    statement.setString(2, "Postman fixture");
+                    statement.setString(3, "Notification endpoint check");
+                    statement.setString(4, "TEST");
+                    statement.setBoolean(5, false);
+                    if (statement.executeUpdate() != 1) throw new IllegalStateException("Notification insert failed");
+                }
+                return;
+            }
+            if (args[0].equals("history")) {
+                var checks = new ArrayList<Map<String, String>>();
+                try (var statement = conn.prepareStatement(
+                        "SELECT contract_id,status FROM check_runs ORDER BY created_at,run_id");
+                     var rows = statement.executeQuery()) {
+                    while (rows.next()) checks.add(Map.of(
+                            "contractId", rows.getString(1), "status", rows.getString(2)));
+                }
+                new ObjectMapper().writerWithDefaultPrettyPrinter().writeValue(Path.of(args[1]).toFile(), checks);
+                return;
+            }
             if (!args[0].equals("snapshot") || !args[1].matches("[a-z][a-z0-9_]*"))
                 throw new IllegalArgumentException("Expected snapshot TABLE FILE or execute SQL_FILE");
             var fields = new TreeMap<String, Object>();

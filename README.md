@@ -177,6 +177,12 @@ See [docs/troubleshooting.md](docs/troubleshooting.md) for common issues and sol
 Copyright © 2024 IEMS Project. All rights reserved.
 ## DCG contract CLI (binary integration)
 
+The accepted Linux/SQLite integration is documented in
+[docs/linux-integrated-acceptance.md](docs/linux-integrated-acceptance.md).
+The isolated PostgreSQL/MySQL endpoint, history, and physical-schema acceptance
+is documented in
+[docs/postgresql-mysql-acceptance.md](docs/postgresql-mysql-acceptance.md).
+
 Run IEMS event-contract checks and record history in SQLite, PostgreSQL or MySQL
 using the packaged DCG binary. See [the live-demo walkthrough](docs/dcg-cli-demo.md)
 for installation, database settings, PASS/FAIL demos and the optional build gate.
