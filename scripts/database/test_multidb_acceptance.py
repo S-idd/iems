@@ -42,6 +42,16 @@ class DatabaseMatrixAcceptanceTest(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, 'Unexpected DCG JDBC history'):
             matrix.validate_history(rows[:-1])
 
+    def test_container_probe_is_portable_to_podman_emulation(self):
+        with patch.object(matrix.shutil, 'which', return_value='/usr/bin/docker'), \
+             patch.object(matrix, 'docker') as docker:
+            matrix.verify_container_engine()
+        docker.assert_called_once_with('info', timeout=30)
+
+        with patch.object(matrix.shutil, 'which', return_value=None), \
+             self.assertRaisesRegex(RuntimeError, 'Docker-compatible CLI'):
+            matrix.verify_container_engine()
+
     def test_cleanup_only_removes_containers_with_owned_label(self):
         evidence = self.temporary() / 'database-matrix-fixture'
         evidence.mkdir()

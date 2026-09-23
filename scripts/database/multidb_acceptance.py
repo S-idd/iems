@@ -53,6 +53,13 @@ def docker(*args: str, input_text: str | None = None, expected: int = 0,
     return done
 
 
+def verify_container_engine() -> None:
+    require(shutil.which('docker'), 'Docker-compatible CLI is required')
+    # Plain `info` works with Docker and Podman's docker CLI emulation. Docker's
+    # .ServerVersion template field is not present in Podman's info report.
+    docker('info', timeout=30)
+
+
 def free_port() -> int:
     with socket.socket() as listener:
         listener.bind(('127.0.0.1', 0))
@@ -268,8 +275,7 @@ def cleanup(evidence: Path) -> None:
 
 def run(args: argparse.Namespace) -> int:
     package = Path(validate_package(args.dcg_home, required_capabilities=PHASE1_CAPABILITIES)['path'])
-    require(shutil.which('docker'), 'Docker CLI is required')
-    docker('info', '--format', '{{.ServerVersion}}')
+    verify_container_engine()
     require(JAR.is_file(), 'Build the IEMS JAR before acceptance')
     require((ROOT / '.dcg/tools/node_modules/newman').is_dir(), 'Install local Newman before acceptance')
     require(not rust_processes(), 'Stop the Rust model before deterministic database acceptance')

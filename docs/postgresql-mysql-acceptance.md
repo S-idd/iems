@@ -19,8 +19,8 @@ directory.
 ## What the runner proves
 
 For each engine, the runner creates two databases in a uniquely named,
-labelled Docker container: one for IEMS application data and one for DCG check
-history. It then verifies:
+labelled Docker-compatible container: one for IEMS application data and one for
+DCG check history. It then verifies:
 
 - IEMS health is HTTP 200 after Flyway initializes the portable baseline.
 - The complete Postman collection passes with 55 requests and 107 assertions.
@@ -38,8 +38,9 @@ PASS/FAIL authority.
 
 ## Prerequisites
 
-Use Java 21, Python 3, Node.js, Docker, Maven, and an extracted DCG package for
-the current host. Build IEMS and install Newman locally:
+Use Java 21, Python 3, Node.js, Docker or Podman Docker-CLI emulation, Maven,
+and an extracted DCG package for the current host. Build IEMS and install
+Newman locally:
 
 ```bash
 export JAVA_HOME=$(/usr/libexec/java_home -v 21)
@@ -53,8 +54,8 @@ These commands create Maven output and ignored local tooling. They do not start
 AI or create database evidence. On Linux, set `JAVA_HOME` to the Java 21 home
 instead of using `/usr/libexec/java_home`.
 
-Docker must be running. The default images are `postgres:16` and `mysql:8.0`.
-The first run may download either image.
+The container engine must be running. The default images are `postgres:16` and
+`mysql:8.0`. The first run may download either image.
 
 ## Run the matrix
 
@@ -74,7 +75,7 @@ python3 scripts/database/multidb_acceptance.py \
 
 Expected: the final line is `PASS: .../results.json`. Credentials are generated
 for this run, passed through process environments or a temporary mode-600
-Docker environment file, and removed. They are not written to `results.json`.
+container environment file, and removed. They are not written to `results.json`.
 The evidence is private and disposable under `.dcg/rehearsals/`.
 
 Inspect the concise result without opening private logs:
