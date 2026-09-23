@@ -133,6 +133,23 @@ its SHA-256 is
 Both engines passed the full endpoint suite, JDBC history verification, and the
 physical migration gate. All preservation and cleanup checks passed.
 
-This result covers the development host above. A Linux run should create a new
-`database-matrix-*` evidence directory and use the already accepted Linux
-package as a read-only input.
+## Verified WSL2 result
+
+On 2026-09-23, the matrix passed on AlmaLinux x86-64 under WSL2 using Podman's
+Docker-CLI emulation and runner commit
+`283964102e1dbe358fdc26c36e44ed86bd6fda6a`. The private evidence index is
+`.dcg/rehearsals/database-matrix-wsl2-20260923-run5/results.json`; its SHA-256
+is `2fc5c297e9397fd55e542cad22f2e2c086b7917460b0e1135467f8f7c5d539c6`.
+
+PostgreSQL used image ID
+`1b3c642526f8d274b12bdcd93b90aeb7e68a1f59eb20613adb96ed561c01d98c`.
+MySQL used image ID
+`6cd09145362dfe6831b14545de3d5fd6cc75c37cfd6ef8561429c1fc73518b39`.
+For each engine, all 55 Postman requests and 107 assertions passed, six expected
+DCG JDBC history rows were verified, compatible DDL returned exit 0, and
+breaking DDL returned exit 1 while preserving the target. Every preservation
+and cleanup check passed, and no Rust advisory process remained.
+
+The WSL2 result used the accepted Linux package as a read-only input. The
+accepted Linux/SQLite archive, its evidence, normal IEMS data, source contracts,
+and selected package all remained unchanged.
