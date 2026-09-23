@@ -33,6 +33,10 @@ DCG check history. It then verifies:
 - Source contracts, the selected DCG package, and the normal SQLite database
   retain their original hashes.
 
+The runner sets `TZ=UTC` and `-Duser.timezone=UTC` only for its owned Java
+children. This avoids legacy host timezone aliases that PostgreSQL rejects and
+does not change the WSL2 or macOS host timezone.
+
 AI is disabled throughout this acceptance. Deterministic DCG is the final
 PASS/FAIL authority.
 
@@ -115,8 +119,9 @@ data, the accepted Linux archive, accepted evidence, or unrelated processes.
 
 On 2026-09-23, the matrix passed on macOS ARM64 with Docker Desktop 29.7.2,
 `postgres:16`, and `mysql:8.0`. The private evidence index is
-`.dcg/rehearsals/database-matrix-20260923T130119Z/results.json`; its SHA-256 is
-`7da3e9dc88cf7e6dee09c9c548d0e420788deacd5c6a11f1377b991a9673c8b9`.
+`.dcg/rehearsals/database-matrix-timezone-20260923T141104Z/results.json`; its
+SHA-256 is
+`7008f5d07ccc04b2468f02eb7b68b6333cd0962e11911bd58610354a9eba2d04`.
 Both engines passed the full endpoint suite, JDBC history verification, and the
 physical migration gate. All preservation and cleanup checks passed.
 

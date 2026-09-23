@@ -60,6 +60,14 @@ def verify_container_engine() -> None:
     docker('info', timeout=30)
 
 
+def normalized_runtime_environment() -> dict[str, str]:
+    # PostgreSQL validates the JVM-provided session timezone during connection
+    # startup. Some WSL distributions expose the legacy Asia/Calcutta alias,
+    # which current PostgreSQL images reject. Keep the host unchanged and make
+    # every Java process owned by this acceptance use the portable UTC ID.
+    return dict(os.environ, TZ='UTC', JAVA_TOOL_OPTIONS='-Duser.timezone=UTC')
+
+
 def free_port() -> int:
     with socket.socket() as listener:
         listener.bind(('127.0.0.1', 0))
@@ -191,7 +199,7 @@ def run_engine(engine: str, image: str, evidence: Path, package: Path,
     engine_dir.mkdir(mode=0o700)
     database = start_database(engine, image, evidence, records)
     app_port = p1.available_port(used_ports)
-    env = dict(os.environ, DCG_HOME=str(package), DCG_AI_ENABLED='false',
+    env = dict(normalized_runtime_environment(), DCG_HOME=str(package), DCG_AI_ENABLED='false',
                SHADOW_INFERENCE_ENABLED='false', IEMS_PORT=str(app_port),
                IEMS_JDBC_URL=database['iemsUrl'], IEMS_DB_USER=database['iemsUser'],
                IEMS_DB_PASSWORD=database['iemsPassword'], IEMS_JWT_SECRET=secrets.token_hex(40),

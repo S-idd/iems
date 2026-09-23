@@ -52,6 +52,15 @@ class DatabaseMatrixAcceptanceTest(unittest.TestCase):
              self.assertRaisesRegex(RuntimeError, 'Docker-compatible CLI'):
             matrix.verify_container_engine()
 
+    def test_runtime_timezone_is_normalized_without_changing_host(self):
+        with patch.dict(matrix.os.environ,
+                        {'TZ': 'Asia/Calcutta', 'JAVA_TOOL_OPTIONS': '-Xmx64m'}, clear=False):
+            environment = matrix.normalized_runtime_environment()
+            self.assertEqual('UTC', environment['TZ'])
+            self.assertEqual('-Duser.timezone=UTC', environment['JAVA_TOOL_OPTIONS'])
+            self.assertEqual('Asia/Calcutta', matrix.os.environ['TZ'])
+            self.assertEqual('-Xmx64m', matrix.os.environ['JAVA_TOOL_OPTIONS'])
+
     def test_cleanup_only_removes_containers_with_owned_label(self):
         evidence = self.temporary() / 'database-matrix-fixture'
         evidence.mkdir()
